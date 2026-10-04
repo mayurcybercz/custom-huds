@@ -2,6 +2,8 @@
 
 A full-desktop HUD for Windows 11, built with Electron. It has interchangeable **skins** that run on one shared engine and a shared library of reusable **widgets** (gadgets).
 
+📖 **[Usage guide](docs/USAGE.md)**: install, controls, every widget, and troubleshooting.
+
 ## Skins
 
 | Skin | Version | Status | Look | Widgets |
@@ -30,6 +32,8 @@ To switch skins, use **tray icon → Skin**, or ⚙ → *Skin* inside the HUD. T
 ## Run
 
 ```bash
+git clone https://github.com/mayurcybercz/custom-huds.git
+cd custom-huds
 npm install
 npm start
 ```
