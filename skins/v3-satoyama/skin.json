@@ -1,0 +1,7 @@
+{
+  "id": "v3-satoyama",
+  "name": "SATOYAMA",
+  "version": "3.0.0",
+  "description": "A living Japanese village as your desktop: day cycle, festival nights, forest at night, pettable dog and cat, ambient soundscape; one-colour HUD at the edges.",
+  "widgets": ["vclock*", "schedule", "todo", "pomodoro", "water", "media", "research", "notes", "meals", "projects", "launcher", "anime", "pet", "terminal"]
+}

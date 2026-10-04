@@ -54,6 +54,9 @@ contextBridge.exposeInMainWorld('hud', {
     quit: () => ipcRenderer.send('win:quit'),
   },
   openExternal: (url) => ipcRenderer.send('open:external', url),
+  assets: {
+    read: (rel) => ipcRenderer.invoke('assets:read', rel),
+  },
   images: {
     fetch: (sources) => ipcRenderer.invoke('images:fetch', sources),
   },

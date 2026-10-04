@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, shell, screen, nativeImage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const store = require('./src/main/store');
 const feeds = require('./src/main/feeds');
 const sysinfo = require('./src/main/sysinfo');
@@ -24,7 +25,7 @@ const setStartup = (on) => app.setLoginItemSettings({ ...loginItem(), openAtLogi
 if (process.platform === 'win32') app.setAppUserModelId(app.isPackaged ? 'com.mayurcybercz.customhuds' : process.execPath);
 
 // Screenshot test runs: keep painting even when other windows cover the HUD.
-if (process.env.HUD_SNAPSHOT) app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+if (process.env.HUD_SNAPSHOT || process.env.HUD_SNAPSHOT_SEQ) app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -46,7 +47,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       sandbox: true,
-      backgroundThrottling: !process.env.HUD_SNAPSHOT,
+      backgroundThrottling: !(process.env.HUD_SNAPSHOT || process.env.HUD_SNAPSHOT_SEQ),
       autoplayPolicy: 'no-user-gesture-required', // ambient sound starts without a click
     },
   });
@@ -58,6 +59,19 @@ function createWindow() {
 
   // Dev aid: HUD_SNAPSHOT=path.png saves a screenshot a few seconds after launch
   // (HUD_SNAPSHOT_JS runs first in the page, HUD_SNAPSHOT_DELAY sets the wait in ms).
+  // HUD_SNAPSHOT_SEQ=steps.json runs [{ js, wait, file }, …] one after another (several shots per launch).
+  if (process.env.HUD_SNAPSHOT_SEQ) {
+    win.webContents.on('console-message', (_e, level, message) => level >= 2 && console.log('[renderer]', message));
+    setTimeout(async () => {
+      const steps = JSON.parse(fs.readFileSync(process.env.HUD_SNAPSHOT_SEQ, 'utf8'));
+      for (const step of steps) {
+        if (step.js) await win.webContents.executeJavaScript(step.js).catch((e) => console.log('[step error]', e.message));
+        await new Promise((r) => setTimeout(r, step.wait || 1500));
+        if (step.file) { fs.writeFileSync(step.file, (await win.webContents.capturePage()).toPNG()); console.log('shot', step.file); }
+      }
+      console.log('sequence done');
+    }, Number(process.env.HUD_SNAPSHOT_DELAY || 6000));
+  }
   if (process.env.HUD_SNAPSHOT) {
     win.webContents.on('console-message', (_e, level, message) => level >= 2 && console.log('[renderer]', message));
     setTimeout(async () => {
@@ -163,6 +177,19 @@ function registerIpc() {
 
   ipcMain.handle('skins:list', () => ({ skins: skins.list(), current: skins.current() }));
   ipcMain.handle('skins:set', (_e, id) => switchSkin(id));
+
+  // Audio files that ship with a skin (CC0 recordings). Only skins/<id>/audio/* can be read.
+  ipcMain.handle('assets:read', async (_e, rel) => {
+    const full = path.resolve(__dirname, String(rel || ''));
+    const skinsDir = path.join(__dirname, 'skins') + path.sep;
+    if (!full.startsWith(skinsDir) || !/[\\/]audio[\\/][^\\/]+\.(mp3|ogg|wav)$/i.test(full)) return null;
+    try {
+      const b = await fs.promises.readFile(full);
+      return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+    } catch {
+      return null;
+    }
+  });
 
   ipcMain.handle('images:fetch', (_e, sources) => images.fetchImages(Array.isArray(sources) ? sources : []));
 

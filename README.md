@@ -9,11 +9,14 @@ Skinnable, full-desktop HUDs for Windows 11, built with Electron. Every **skin**
 | Skin | Version | Status | Look | Widgets |
 |------|---------|--------|------|---------|
 | [`v1-nexus`](skins/v1-nexus) · **NEXUS** | 1.0.0 | ✅ stable | Hacker / Iron-Man HUD: cyan on black, hex grid, scanlines, arc-reactor clock, boot sequence | clock\*, sys, pet, research, terminal, todo, projects, media, tech, anime |
-| [`v2-lofi`](skins/v2-lofi) · **LO-FI** | 2.0.0 | ✅ stable | Cozy anime / lo-fi: frosted glass cards over a city that follows the real time of day (dawn → day → dusk → night), sakura petals or rain, daily rings | hero\*, schedule, pomodoro, water, meals, images, launcher, notes, todo + projects (tabbed), research, media, anime, pet, terminal (drop-down) |
+| [`v2-lofi`](skins/v2-lofi) · **LO-FI** | 2.1.0 | ✅ stable | Cozy anime / lo-fi: frosted glass cards over a city that follows the real time of day; weather changes the lighting (petals, rain with sound and lightning, clear); daily rings | hero\*, schedule, pomodoro, water, meals, images, launcher, notes, todo + projects (tabbed), research, media, anime, pet, terminal (drop-down) |
+| [`v3-satoyama`](skins/v3-satoyama) · **SATOYAMA** | 3.0.0 | ✅ new | A living Japanese village as the desktop: realistic pixel art with dynamic light, an auto day cycle (dawn → festival night → forest), scene modes, villagers, a pettable dog and cat, toads, fireflies, a full soundscape; one-colour HUD at the edges | vclock\*, schedule, todo, pomodoro, water, media + on-demand sheets: research, notes, meals, projects, launcher, anime, pet, terminal |
 
 \* = skin-specific widget; all others come from the shared library.
 
-To switch skins, use **tray icon → Skin**, or ⚙ → *Skin*. To launch straight into one skin, set `HUD_SKIN=v2-lofi` before running `npm start`.
+To switch skins, use **tray icon → Skin**, or ⚙ → *Skin*. To launch straight into one skin, set `HUD_SKIN=v3-satoyama` before running `npm start`.
+
+The v3 design notes, with live samples, are in [docs/design/v3-satoyama.html](docs/design/v3-satoyama.html).
 
 ## Shared widgets
 
@@ -61,10 +64,13 @@ You can also double-click **`Start Custom HUDs.vbs`** (no console window).
 ```
 main.js, preload.js        Electron main process + the safe window.hud bridge
 src/main/                  Engine: store, skins, feeds, images, sysinfo, terminal (pty), media poller, research (Claude/Ollama), websearch
-shared/core/               Renderer core: util (DOM helpers, event bus, cssVar, notify), modal/settings, hud (skin bootstrap, tabbed cards)
+shared/core/               Renderer core: util (DOM helpers, event bus, cssVar, notify), modal/settings, hud (skin bootstrap, tabbed cards),
+                           ambience (WebAudio: rain, thunder, 24 synthesised village voices, ambient layers, CC0 sample playback)
 shared/widgets/            Reusable widgets, each exporting mount({ panel, body, meta, slot, opts })
 shared/styles/             widgets.css (v1 widgets) + gadgets.css (v2 gadgets), themed through CSS variables
 skins/<id>/                A skin: skin.json, index.html (layout), styles.css (palette + chrome), js/app.js (+ skin-only widgets)
+skins/v3-satoyama/js/      engine/ (world art, sky, actors, scenery, effects, compositor), director (day cycle & modes),
+                           soundscape, pointer; audio/ holds optional CC0 recordings
 ```
 
 ### Making a skin
@@ -82,6 +88,17 @@ All data lives in `%APPDATA%\custom-huds\data.json` and is shared by every skin.
 
 ## Changelog
 
+- **v3.0.0**: New **SATOYAMA** skin.
+  - A pixel-art Japanese village drawn at 640×348 and scaled 3×, with:
+    - a light map (lanterns, windows and the bonfire light their surroundings) and bloom
+    - a creek that reflects the lit village, swaying bamboo and rice, and a working bamboo pump
+  - An auto day cycle of six scenes (1½–2½ minutes each), plus fixed modes: dawn, midday, dusk, festival night, rainy afternoon, forest night and real clock.
+  - Villagers on daily schedules, kids and a kite, bon-odori dancers, a dog and cat you can pet, a toad family, fireflies, birds, an owl, and shooting stars on click.
+  - A full soundscape, all synthesised, with optional CC0 recordings for children and the temple bell.
+  - A one-colour edge HUD that fades when idle, a dock with on-demand sheets, and adaptive frame rate (30/20/15 fps).
+- **v2.1.0**: Weather changes the lighting in LO-FI.
+  - Rain brings an overcast sky, a storm deck, lit-window halos, droplets on the glass, lightning with thunder, and ambient rain sound.
+  - Petals bring warm spring light and sun rays.
 - **v2.0.0**
   - Renamed the project to **Custom HUDs**; NEXUS is now the name of the v1 skin. Existing data migrates automatically from `%APPDATA%\nexus-hud`.
   - New **LO-FI** skin.

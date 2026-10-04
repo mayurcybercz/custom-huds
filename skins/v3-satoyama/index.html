@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'">
+  <title>Custom HUDs · Satoyama</title>
+  <link rel="stylesheet" href="../../node_modules/@fontsource/zen-kaku-gothic-new/400.css">
+  <link rel="stylesheet" href="../../node_modules/@fontsource/zen-kaku-gothic-new/700.css">
+  <link rel="stylesheet" href="../../node_modules/@fontsource/shippori-mincho-b1/800.css">
+  <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css">
+  <link rel="stylesheet" href="../../shared/styles/widgets.css">
+  <link rel="stylesheet" href="../../shared/styles/gadgets.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="scene" width="640" height="348" aria-label="Animated Japanese village"></canvas>
+
+  <div id="hud">
+    <aside class="rail left" aria-label="Today">
+      <section class="card bare" data-widget="vclock"><div data-body></div></section>
+      <section class="card" data-widget="schedule"><header><h2>today</h2><span class="meta" data-slot="meta"></span></header><div class="body" data-body></div></section>
+      <section class="card" data-widget="todo" data-opts='{"placeholder":"add a task… (! for important)"}'><header><h2>tasks</h2><span class="meta" data-slot="meta"></span></header><div class="body" data-body></div></section>
+    </aside>
+
+    <aside class="rail right" aria-label="Focus and habits">
+      <section class="card" data-widget="pomodoro"><header><h2>focus</h2><span class="meta" data-slot="meta"></span></header><div class="body" data-body></div></section>
+      <section class="card" data-widget="water"><header><h2>water</h2><span class="meta" data-slot="meta"></span></header><div class="body" data-body></div></section>
+      <section class="card" data-widget="media"><header><h2>now playing</h2><span class="meta" data-slot="meta"></span></header><div class="body" data-body></div></section>
+    </aside>
+
+    <div id="caption" aria-live="polite"></div>
+
+    <nav id="dock" aria-label="Scene and tools">
+      <button id="btn-mode" title="Scene mode">⟳ <span id="mode-label">Auto day</span></button>
+      <button id="btn-next" title="Next scene (N)">⏭</button>
+      <span class="sep"></span>
+      <button data-sheet="research" title="Research">🔭</button>
+      <button data-sheet="notes" title="Notes">📝</button>
+      <button data-sheet="meals" title="Meals">🍱</button>
+      <button data-sheet="projects" title="Projects">✦</button>
+      <button data-sheet="launcher" title="Launcher">🚀</button>
+      <button data-sheet="anime" title="Anime">🌸</button>
+      <button data-sheet="pet" title="Companion">🐾</button>
+      <button id="btn-term" title="Terminal (Ctrl + `)">⌨</button>
+      <span class="sep"></span>
+      <button id="btn-sound" title="Ambient sound (M)">🔊</button>
+      <button id="btn-color" title="HUD colour"><i class="dot"></i></button>
+      <button id="btn-hide" title="Hide the HUD (H)">◐</button>
+      <button data-action="settings" title="Settings / skins">⚙</button>
+      <button data-action="minimize" title="Minimize (Ctrl+Alt+Space toggles)">—</button>
+      <button data-action="quit" title="Quit">⏻</button>
+    </nav>
+
+    <div id="modes" class="menu" hidden></div>
+
+    <div id="sheet" hidden>
+      <div class="sheet-panel">
+        <header><h2 id="sheet-title"></h2><span class="meta" id="sheet-meta"></span><div class="actions" id="sheet-actions"></div><button class="close" id="sheet-close" title="Close (Esc)">✕</button></header>
+        <section class="pane" data-pane="research" data-widget="research"
+          data-opts='{"text":{"run":"search","abort":"stop","placeholder":"what would you like to know?","idle":"ask anything; I&#39;ll read the web and write it up","starting":"setting out…","gathering":"reading…","writing":"writing it up…","scanning":"searching","complete":"done","aborted":"stopped.","online":"ready"}}'>
+          <div class="pane-tools"><select data-slot="history" title="Past research"></select></div>
+          <div class="body" data-body></div>
+        </section>
+        <section class="pane" data-pane="notes" data-widget="notes"><div class="body" data-body></div></section>
+        <section class="pane" data-pane="meals" data-widget="meals"><div class="body" data-body></div></section>
+        <section class="pane" data-pane="projects" data-widget="projects" data-opts='{"placeholder":"new project…"}'><div class="body" data-body></div></section>
+        <section class="pane" data-pane="launcher" data-widget="launcher"><div class="body" data-body></div></section>
+        <section class="pane" data-pane="anime" data-widget="anime">
+          <div class="pane-tools"><div class="tabs" data-slot="tabs"><button data-tab="airing" class="on">airing</button><button data-tab="news">news</button></div><button data-slot="refresh" title="Refresh">↻</button></div>
+          <div class="body" data-body></div>
+        </section>
+        <section class="pane" data-pane="pet" data-widget="pet"><div class="body" data-body></div></section>
+      </div>
+    </div>
+
+    <section class="quake" id="quake" data-widget="terminal">
+      <header><h2>terminal</h2><span class="meta">powershell · ctrl + ` to hide</span></header>
+      <div class="body" data-body></div>
+    </section>
+  </div>
+
+  <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+  <script src="../../node_modules/marked/lib/marked.umd.js"></script>
+  <script src="../../node_modules/dompurify/dist/purify.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

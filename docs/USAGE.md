@@ -51,11 +51,65 @@ Frosted glass cards over an animated city. The sky follows the **real time of da
 
 | Control | What it does |
 |---------|--------------|
-| **✿ / ☂ / ☾** (top right) | Weather: sakura petals, rain, or clear sky |
+| **✿ / ☂ / ☾** (top right) | Weather: sakura petals (warm light, sun rays), rain (overcast light, rain sound, lightning and thunder, drops on the glass), or clear sky |
+| **🔊 / 🔉 / 🔇** | Ambient sound volume (rain and thunder) |
 | **⌨** or **Ctrl + `** | Drop-down terminal (Esc or Ctrl + ` again hides it) |
 | Double-click the greeting | Set the name it greets you with |
 | **Daily rings** (top right) | Today's progress: 🍅 focus sessions (goal 4), 💧 water, ✓ tasks done, plus kcal eaten |
 | **tasks / projects** tabs | One card holds both; it remembers the last tab |
+
+### SATOYAMA (v3): a living Japanese village
+The whole desktop is a pixel-art village with a temple on the hill, thatched farmhouses, paddies, a creek and a forest. The HUD is reduced to quiet one-colour rails at the edges that fade while you're not using them.
+
+**Scene modes** (left button on the dock):
+
+| Mode | What you get |
+|------|--------------|
+| ⟳ **Auto day** (default) | The whole day as six scenes, 1½–2½ minutes each, about 12½ minutes per day. Dawn mist at the temple, morning, midday with kids and a kite, coming home at dusk, the evening (a festival unless it rained), then the forest late at night. Every third day is rainy. ⏭ (or **N**) skips to the next scene. |
+| 🌅 Dawn · ☀️ Midday · 🌆 Dusk | Hold that moment |
+| 🏮 **Festival night** | Lantern strings, bon-odori dancers circling the yagura, a drummer, a food stall, kids with sparklers, the bonfire, taiko and flute |
+| ☔ Rainy afternoon | Overcast light, umbrellas, rain on the thatch and the creek |
+| 🌲 Forest night | Fireflies, the toad family out of their hut, an owl, kajika frogs |
+| 🕰️ Real clock | Follows your computer clock. The festival is on Saturdays and during Obon (13–16 Aug) |
+
+The temple bell rings at 6:00, 12:00 and 18:00 scene time. The camera drifts by itself, toward the temple at dawn, the square at midday, the fields at dusk and the forest late at night.
+
+**Things you can touch:**
+
+| Do this | What happens |
+|---------|--------------|
+| Hold the mouse on the **dog** (by the path) and rub | It wags, sticks its tongue out, hearts float up, and it pants happily (sometimes a small "wuf") |
+| Rub the **cat** (on a veranda by day, on a roof at night) | It closes its eyes and purrs |
+| Hover the **kids** | They wave and jump. Clicking the sky by day makes them all run around |
+| Click the **kite** | It does a loop |
+| Move through the **water**, or click it | Ripples follow your mouse, and a click makes a splash and maybe a fish jump |
+| Brush the **rice**, **bamboo** or the big **camphor tree** | Stalks part around the cursor and rustle; the tree drops leaves |
+| Get close to the **sparrows** on a roof, or the flock in the sky | They scatter |
+| Drag across a **cloud** | You push it along |
+| Click the **night sky** | A shooting star |
+| Click the **bell house** on the hill | The bell rings |
+| Click the **bamboo pump** by the creek | It tips early |
+| Hover a **toad** (forest, at night) | It croaks; click it and it hops |
+| Hover the **owl** | It turns and hoots |
+| Move near **fireflies** | They drift toward you |
+| Wave over the **festival lanterns** | They sway |
+
+**Dock** (bottom centre):
+- 🔭 📝 🍱 ✦ 🚀 🌸 🐾 open research, notes, meals, projects, launcher, anime or the companion as a sheet over the centre. Click outside the sheet or press Esc to close it.
+- ⌨ opens the drop-down terminal.
+- 🔊 sets the volume (sound is on by default). **M** mutes, and muting fully pauses audio to save CPU.
+- ● cycles the HUD colour: washi, sakura, matcha, lantern or sora.
+- ◐ (or **H**) hides the HUD so it's just the village.
+
+**Sound:** everything is synthesised live:
+- the creek, wind, rain on thatch, bonfire and festival crowd
+- birds (uguisu, sparrows, kite-hawk, crows), cicadas, crickets, frogs, toads and the owl
+- the bamboo pump, the temple bell, wind chimes, taiko and flute
+- the dog and cat
+
+Sounds are placed left or right by where they are in the scene, and get quieter when the camera is far away. If `skins/v3-satoyama/audio/children.mp3` and `bell.mp3` exist (CC0 recordings), they're used for the children's voices (very quiet, daytime only) and the bell.
+
+**CPU:** the village is drawn at 640×348 and scaled up. It runs at 30 fps while you use the mouse, 20 fps otherwise, and 15 fps after a minute idle, which is roughly 3–4% of a modern CPU.
 
 ## 5. Widgets
 
