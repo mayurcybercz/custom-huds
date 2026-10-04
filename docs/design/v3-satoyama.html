@@ -1,0 +1,962 @@
+<title>Satoyama Scene Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: a single scene book. The live diorama opens the page, then a day of scenes,
+   the soundscape, the HUD rails, build options, decisions, plan and sources. Deliberately one dark theme (night village). */
+:root {
+  color-scheme: dark;
+  --ink: #0f1527;        /* aizome indigo, page ground */
+  --ink-2: #161e36;      /* raised panels */
+  --ink-3: #212b4a;      /* controls, hover */
+  --line: #2c3757;
+  --washi: #eee7d6;      /* paper-white text */
+  --mute: #a0a8c0;       /* secondary text, indigo-biased */
+  --lantern: #f0b351;    /* chōchin gold, the accent */
+  --torii: #e06a4f;      /* vermilion, tiny highlights only */
+  --moss: #9cc07c;       /* "synthesized" tag */
+  --hud: 238 231 214;    /* HUD mock colour (one colour, translucent) */
+  --display: 'Shippori Mincho B1', 'Yu Mincho', 'Hiragino Mincho ProN', Georgia, serif;
+  --body: 'Zen Kaku Gothic New', 'Yu Gothic', 'Hiragino Sans', system-ui, sans-serif;
+  --pixel: 'DotGothic16', ui-monospace, 'Cascadia Mono', monospace;
+}
+* { box-sizing: border-box; }
+body { background: var(--ink); color: var(--washi); font: 16px/1.7 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 96px; display: flex; flex-direction: column; gap: 64px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; font-weight: 800; letter-spacing: .01em; }
+h2 { font-size: clamp(26px, 3.2vw, 34px); }
+h3 { font-size: 19px; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--lantern); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--lantern); outline-offset: 2px; }
+.eyebrow { font: 14px/1 var(--pixel); color: var(--lantern); letter-spacing: .08em; }
+.lede { color: var(--mute); font-size: 17px; }
+.section { display: flex; flex-direction: column; gap: 20px; }
+.section > header { display: flex; flex-direction: column; gap: 8px; }
+.jp { font-family: var(--display); color: var(--mute); font-weight: 600; }
+
+/* ---------- title ---------- */
+.title { display: flex; flex-direction: column; gap: 14px; }
+.title h1 { font-size: clamp(44px, 7vw, 76px); line-height: 1; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+.title h1 .jp { font-size: .55em; color: var(--lantern); }
+
+/* ---------- diorama ---------- */
+.stage { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: #000; }
+.stage canvas { display: block; width: 100%; height: auto; aspect-ratio: 480 / 200; image-rendering: pixelated; }
+.clockbadge { position: absolute; left: 12px; top: 10px; font: 15px/1 var(--pixel); color: #fff; text-shadow: 0 1px 0 #000, 0 0 8px rgba(0,0,0,.6); letter-spacing: .05em; pointer-events: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 12px 14px; background: var(--ink-2); border: 1px solid var(--line); border-top: none; border-radius: 0 0 6px 6px; }
+.stage { border-radius: 6px 6px 0 0; }
+.timeline { flex: 1 1 280px; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.timeline input { flex: 1; min-width: 0; accent-color: var(--lantern); }
+.readout { font: 15px/1 var(--pixel); min-width: 9.5em; color: var(--washi); font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.seg button, .btn { font: 500 13.5px var(--body); color: var(--washi); background: transparent; border: none; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--lantern); color: #1d1608; }
+.btn { border: 1px solid var(--line); border-radius: 999px; background: var(--ink-3); }
+.btn:hover, .seg button:hover:not([aria-pressed="true"]) { background: var(--ink-3); color: #fff; }
+.btn[aria-pressed="true"] { background: var(--lantern); color: #1d1608; border-color: var(--lantern); }
+.btn.primary { background: var(--lantern); color: #1d1608; border-color: var(--lantern); font-weight: 700; }
+.note { font-size: 13.5px; color: var(--mute); }
+
+/* ---------- HUD mock over the scene ---------- */
+.hud { position: absolute; inset: 0; display: flex; justify-content: space-between; padding: 3.2% 2.2%; pointer-events: none; opacity: 0; transition: opacity .4s; }
+.hud.on { opacity: 1; }
+.rail { width: 21%; display: flex; flex-direction: column; gap: 6%; color: rgb(var(--hud)); font-size: clamp(9px, 1.05vw, 13px); }
+.card { background: rgb(var(--hud) / .07); border: 1px solid rgb(var(--hud) / .26); border-radius: 4px; padding: .7em .9em; backdrop-filter: blur(2px); }
+.card small { display: block; font: .78em/1.3 var(--pixel); opacity: .75; letter-spacing: .06em; }
+.card .big { font: 800 2.6em/1 var(--display); }
+.card ul { margin: .3em 0 0; padding: 0; list-style: none; display: grid; gap: .15em; }
+.card li::before { content: '□ '; opacity: .7; }
+.card li.done { opacity: .55; text-decoration: line-through; }
+.card li.done::before { content: '■ '; }
+.ring { width: 3.6em; height: 3.6em; }
+.dots { display: flex; gap: .3em; margin-top: .3em; }
+.dots i { width: .7em; height: 1em; border: 1px solid rgb(var(--hud) / .6); border-radius: 0 0 .25em .25em; }
+.dots i.full { background: rgb(var(--hud) / .7); }
+.swatches { display: inline-flex; gap: 6px; align-items: center; }
+.swatches button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
+.swatches button[aria-pressed="true"] { border-color: #fff; }
+
+/* ---------- day of scenes ---------- */
+.scenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+.scene { display: flex; flex-direction: column; background: var(--ink-2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-align: left; color: inherit; font: inherit; padding: 0; cursor: pointer; transition: border-color .2s, transform .2s; }
+.scene:hover { border-color: var(--lantern); transform: translateY(-2px); }
+.scene canvas { width: 100%; height: auto; aspect-ratio: 480 / 200; image-rendering: pixelated; display: block; }
+.scene .txt { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.scene .when { font: 14px/1 var(--pixel); color: var(--lantern); letter-spacing: .05em; }
+.scene dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 14px; }
+.scene dt { font: 12px/1.9 var(--pixel); color: var(--mute); }
+.scene dd { margin: 0; }
+
+/* ---------- sound board ---------- */
+.groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
+.group h3 { font-size: 16px; margin-bottom: 8px; color: var(--mute); font-family: var(--pixel); font-weight: 400; letter-spacing: .06em; }
+.voices { display: flex; flex-direction: column; gap: 6px; }
+.voice { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; padding: 8px 10px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 6px; }
+.voice button.play { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--ink-3); color: var(--lantern); cursor: pointer; font-size: 13px; }
+.voice button.play:hover { background: var(--lantern); color: #1d1608; }
+.voice button.play:disabled { color: var(--mute); cursor: not-allowed; background: transparent; }
+.voice b { font-weight: 700; font-size: 14.5px; }
+.voice span.when { display: block; font-size: 12.5px; color: var(--mute); line-height: 1.4; }
+.tag { font: 11px/1 var(--pixel); padding: 4px 6px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+.tag.synth { color: var(--moss); }
+.tag.rec { color: var(--torii); }
+
+/* ---------- tables, decisions, plan ---------- */
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font: 12.5px/1.4 var(--pixel); color: var(--mute); font-weight: 400; letter-spacing: .05em; background: var(--ink-2); }
+tr:last-child td { border-bottom: none; }
+tr.pick td:first-child { box-shadow: inset 3px 0 0 var(--lantern); }
+.pickmark { font: 11px/1 var(--pixel); color: var(--lantern); display: block; margin-top: 4px; }
+.decisions { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.decision { background: var(--ink-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.decision ol { margin: 0; padding-left: 1.2em; font-size: 14.5px; color: var(--mute); }
+.decision .rec { font-size: 14.5px; }
+.decision .rec b { color: var(--lantern); font-weight: 700; }
+.plan { display: grid; gap: 10px; counter-reset: phase; margin: 0; padding: 0; list-style: none; }
+.plan li { display: grid; grid-template-columns: 74px 1fr; gap: 14px; padding: 12px 14px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 6px; }
+.plan li::before { counter-increment: phase; content: 'phase ' counter(phase); font: 13px/1.6 var(--pixel); color: var(--lantern); }
+.plan b { display: block; }
+.plan span { color: var(--mute); font-size: 14.5px; }
+.sources { columns: 2 340px; column-gap: 28px; margin: 0; padding-left: 1.1em; font-size: 14.5px; color: var(--mute); }
+.sources li { break-inside: avoid; margin-bottom: 6px; }
+.howlight { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.howlight figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.howlight canvas { width: 100%; height: auto; aspect-ratio: 480 / 200; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 4px; }
+.howlight figcaption { font-size: 13.5px; color: var(--mute); }
+@media (max-width: 640px) { .hud .rail { width: 30%; } .readout { min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .scene, .hud { transition: none; } }
+</style>
+
+<div class="wrap">
+  <section class="title">
+    <div class="eyebrow">Custom HUDs · v3 skin · design stage</div>
+    <h1>Satoyama <span class="jp">里山</span></h1>
+    <p class="lede">A Japanese hillside village that lives on your desktop. It follows your real clock and weather, and the HUD keeps to quiet rails at the edges so the scene stays the main thing. Everything on this page is a working sample: drag the time, switch to the forest, turn the sound on.</p>
+  </section>
+
+  <section class="section" aria-label="Live diorama">
+    <div>
+      <div class="stage" id="stage">
+        <canvas id="scene" width="480" height="200" aria-label="Animated pixel-art village scene"></canvas>
+        <div class="clockbadge" id="badge"></div>
+        <div class="hud" id="hud" aria-hidden="true">
+          <div class="rail">
+            <div class="card"><small>SUN · 4 OCT</small><div class="big" id="hudclock">18:40</div></div>
+            <div class="card"><small>NOW · ends in 20 min</small>deep work<small style="margin-top:.4em">NEXT · 19:00</small>dinner</div>
+            <div class="card"><small>TASKS · example</small><ul><li class="done">water the garden</li><li>push v3 design</li><li>call home</li></ul></div>
+          </div>
+          <div class="rail">
+            <div class="card" style="display:flex;gap:.8em;align-items:center"><svg class="ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="rgb(var(--hud) / .2)" stroke-width="3"/><circle cx="20" cy="20" r="16" fill="none" stroke="rgb(var(--hud))" stroke-width="3" stroke-dasharray="100.5" stroke-dashoffset="38" transform="rotate(-90 20 20)"/></svg><div><small>FOCUS</small><b>15:42</b></div></div>
+            <div class="card"><small>WATER · 1.0 / 2.0 L</small><div class="dots"><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i><i></i><i></i></div></div>
+            <div class="card"><small>NOW PLAYING</small>lofi rain · jzbts</div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="timeline">
+          <label for="time" class="readout" id="readout">--:--</label>
+          <input id="time" type="range" min="0" max="23.99" step="0.01" value="17.6" aria-label="Time of day">
+        </div>
+        <button class="btn" id="cycle" aria-pressed="false" title="Run a whole day in 3 minutes">▶ day cycle</button>
+        <button class="btn" id="now" title="Jump to your real clock">now</button>
+        <span class="seg" role="group" aria-label="Zone"><button data-zone="village" aria-pressed="true">village</button><button data-zone="forest" aria-pressed="false">forest</button></span>
+        <span class="seg" role="group" aria-label="Weather"><button data-weather="clear" aria-pressed="true">clear</button><button data-weather="rain" aria-pressed="false">rain</button></span>
+        <button class="btn" id="festival" aria-pressed="true" title="Festival nights: lanterns, dancers, taiko">festival</button>
+        <button class="btn" id="bellbtn" title="Ring the temple bell">ring bell</button>
+        <button class="btn" id="hudbtn" aria-pressed="false" title="Show the HUD rails over the scene">HUD</button>
+        <span class="swatches" role="group" aria-label="HUD colour" id="swatches" hidden>
+          <button style="background:rgb(238 231 214)" data-hud="238 231 214" aria-pressed="true" aria-label="Washi"></button>
+          <button style="background:rgb(255 196 214)" data-hud="255 196 214" aria-pressed="false" aria-label="Sakura"></button>
+          <button style="background:rgb(196 228 170)" data-hud="196 228 170" aria-pressed="false" aria-label="Matcha"></button>
+          <button style="background:rgb(255 210 140)" data-hud="255 210 140" aria-pressed="false" aria-label="Lantern"></button>
+        </span>
+        <button class="btn primary" id="soundbtn" aria-pressed="false">sound on</button>
+      </div>
+    </div>
+    <p class="note">Drawn at 480×200 and scaled up, with no image or audio files: the art is procedural pixel art and every sound is synthesized in your browser. The bell rings on its own at 6:00, 12:00 and 18:00 while the day cycle runs.</p>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">01 · a day in the village</div>
+      <h2>Six moments, scripted to the clock</h2>
+      <p class="lede">The scene changes with the real time of day. Each moment has its own light, people and sounds; click one to load it into the diorama above.</p>
+    </header>
+    <div class="scenes" id="scenes"></div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">02 · soundscape</div>
+      <h2>Twenty voices, mixed by time and place</h2>
+      <p class="lede">A small director decides what plays: birds in the morning, cicadas at dusk, frogs by the creek at night, the bamboo pump only when you're near it. Almost all of it can be synthesized, which keeps the skin free of sound files like v2's rain. Two things sound much better recorded, and both have CC0 recordings available.</p>
+    </header>
+    <div class="groups" id="voices"></div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">03 · the HUD</div>
+      <h2>Widgets keep to the edges</h2>
+      <p class="lede">Press <b>HUD</b> above to see the rails over the scene. Every widget uses one translucent colour you pick (washi, sakura, matcha or lantern), thin lines, small type and no cards stacked over the middle. The centre of the screen belongs to the village.</p>
+    </header>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Rail</th><th>Widgets</th><th>Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>Left</td><td>Clock and date, schedule now / next, tasks</td><td>Fade to about 40% when idle, brighten on hover. Typing a task works without opening anything.</td></tr>
+          <tr><td>Right</td><td>Focus timer, water, now playing</td><td>Focus ring and water glasses stay readable at a glance; controls appear on hover.</td></tr>
+          <tr><td>On demand</td><td>Research, notes, meals, launcher, terminal</td><td>Open as a frosted sheet over the centre from a small dock or hotkey, then slide away.</td></tr>
+          <tr><td>In the scene</td><td>The pet</td><td>Optional: your companion lives in the village instead of a card, and reacts to finished tasks.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">04 · how to build it</div>
+      <h2>Three ways to draw the village</h2>
+      <p class="lede">The samples use the first approach. The light works like a lantern lighting a room. The scene is drawn as if at noon, then dimmed by an ambient-light layer for the time of day. Lanterns, windows, the bonfire and fireflies add their own light back into that layer, so at night every light source lights what's around it.</p>
+    </header>
+    <div class="howlight" id="howlight"></div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Approach</th><th>Look</th><th>Effort</th><th>Runtime cost</th><th>Day / night / weather</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td><b>Procedural pixel art</b><span class="pickmark">recommended · these samples</span></td><td>Cozy pixel diorama; every object and character is drawn by code</td><td>Medium. Each object is a small drawing function</td><td>Very low. 480×200 at 30 fps</td><td>Natural. Light layer plus palettes, fully dynamic</td></tr>
+          <tr><td><b>Painted backgrounds</b></td><td>Lush, painterly stills (image-model generated per time of day) with animated overlays</td><td>Low to start, hard to keep consistent</td><td>Low</td><td>Needs a separate painting per time and weather; moving characters clash with the painting</td></tr>
+          <tr><td><b>Low-poly 3D diorama</b></td><td>Toy-like 3D village with real shadows (three.js)</td><td>High. Modelling and a 3D pipeline</td><td>Medium to high. A GPU running under your work</td><td>Excellent lighting, but the cozy hand-made feel is harder</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Sound approach</th><th>Quality</th><th>Size</th><th>Licensing</th></tr></thead>
+        <tbody>
+          <tr><td><b>Synthesize everything</b></td><td>Good for water, insects, birds, drums; voices impossible; bell is decent</td><td>No files</td><td>None needed</td></tr>
+          <tr class="pick"><td><b>Hybrid</b><span class="pickmark">recommended</span></td><td>Synth for the 18 ambient voices, two or three CC0 recordings: temple bell, children playing, festival crowd</td><td>About 2–4 MB</td><td>CC0 only, so the public repo stays clean</td></tr>
+          <tr><td><b>Recordings only</b></td><td>Most realistic, but loops repeat and can't follow the scene as closely</td><td>30–100 MB</td><td>Many good recordings are CC BY or non-commercial; attribution needed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">05 · decisions for you</div>
+      <h2>What I need from you before building</h2>
+      <p class="lede">Each has a suggested default; answer only where you want something different.</p>
+    </header>
+    <div class="decisions">
+      <div class="decision"><h3>Art direction</h3><ol><li>Pixel art, as sampled</li><li>Painted backgrounds</li><li>Low-poly 3D</li></ol><p class="rec"><b>Suggest:</b> pixel art, maybe at a slightly higher resolution (640×270) for more detail.</p></div>
+      <div class="decision"><h3>Seasons</h3><ol><li>Always summer</li><li>Follow the real calendar: spring sakura, summer fireflies, autumn gold rice and maples, winter snow</li></ol><p class="rec"><b>Suggest:</b> start in summer, add seasons in the last phase.</p></div>
+      <div class="decision"><h3>Festival nights</h3><ol><li>Every night, 19:00–22:00</li><li>Weekends only</li><li>Weekends plus Obon week in mid-August</li></ol><p class="rec"><b>Suggest:</b> weekends plus Obon, so it stays special.</p></div>
+      <div class="decision"><h3>Temple bell</h3><ol><li>6:00, 12:00 and 18:00 (the traditional ake-mutsu and kure-mutsu)</li><li>Every hour, softly</li><li>Never on its own</li></ol><p class="rec"><b>Suggest:</b> 6, 12 and 18, plus clicking the bell house.</p></div>
+      <div class="decision"><h3>Camera</h3><ol><li>Village by day, drifting to the forest late at night on its own</li><li>Manual only</li></ol><p class="rec"><b>Suggest:</b> automatic drift, with a click to switch.</p></div>
+      <div class="decision"><h3>Sound at start-up</h3><ol><li>On, quiet</li><li>Off until you turn it on</li></ol><p class="rec"><b>Suggest:</b> on and quiet, with a mute that remembers.</p></div>
+      <div class="decision"><h3>Children's voices</h3><ol><li>Add a quiet CC0 recording, daytime only</li><li>Leave them out</li></ol><p class="rec"><b>Suggest:</b> add, very quiet. Synthesis can't do voices.</p></div>
+      <div class="decision"><h3>Little interactions</h3><ol><li>Click the bell house to ring, tap the well to bring the toads out, kids wave when you finish a task</li><li>No interaction, pure backdrop</li></ol><p class="rec"><b>Suggest:</b> a few, all optional.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">06 · build plan</div>
+      <h2>After you approve</h2>
+    </header>
+    <ol class="plan">
+      <li><div><b>Scene engine and light</b><span>Village and forest worlds, parallax, time-of-day palettes, the light layer, rain. Reuses v2's real-clock and weather plumbing.</span></div></li>
+      <li><div><b>Life</b><span>Characters and their daily schedules: monk, farmers, kids and kite, basket carriers, bonfire circle, bon-odori dancers, toad family, fireflies, owl, cat, birds.</span></div></li>
+      <li><div><b>Soundscape</b><span>Move these voices into the shared ambience engine, add the director, and fetch the CC0 bell and children recordings.</span></div></li>
+      <li><div><b>HUD rails</b><span>One-colour edge widgets reusing the shared widget library, plus a frosted sheet for research, notes, meals and the terminal.</span></div></li>
+      <li><div><b>Seasons and polish</b><span>Calendar seasons, little interactions, performance tuning, docs.</span></div></li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <header>
+      <div class="eyebrow">07 · research notes</div>
+      <h2>What the samples are based on</h2>
+    </header>
+    <ul class="sources">
+      <li><b>Shishi-odoshi.</b> A bamboo tube on a pivot fills from a spout, tips to empty, and its heavy end falls back onto a rock with a sharp knock. Originally used to scare deer. <a href="https://en.wikipedia.org/wiki/Shishi-odoshi">Wikipedia</a></li>
+      <li><b>Garden soundscape reference.</b> myNoise's Japanese Garden generator layers water, bamboo and birds much like the director here. <a href="https://mynoise.net/NoiseMachines/japaneseGardenSoundscapeGenerator.php">myNoise</a></li>
+      <li><b>Temple bell, CC0.</b> A bonshō recorded at Hida no Sato folk village near Takayama. <a href="https://freesound.org/people/Vurca/sounds/397352/">Freesound · Vurca</a>. Also a CC0 calling bell at Daitokuji, Kyoto: <a href="https://freesound.org/people/nahmandub/sounds/131348/">Freesound · nahmandub</a></li>
+      <li><b>Japan field recordings.</b> <a href="https://freesound.org/people/RutgerMuller/packs/20158/">RutgerMuller's pack</a> and <a href="https://freesound.org/people/tcpp/sounds/223960/">a night forest in Aichi</a>. Check each file's licence.</li>
+      <li><b>Children playing.</b> Candidates such as <a href="https://freesound.org/people/InspectorJ/sounds/398160/">InspectorJ's distant playground</a> need their licence checked; CC0 only goes in the repo.</li>
+      <li><b>Toads and kajika frogs.</b> The common toad (hikigaeru) gives a quiet, modest "kuk-kuk"; the kajika frog of mountain streams sings a clear "fi-fi-fi", celebrated in waka poetry. <a href="https://www.japantimes.co.jp/life/2001/08/03/environment/common-toad-2/">Japan Times</a> · <a href="https://en.wikipedia.org/wiki/Kajika_frog">Wikipedia</a> · <a href="https://note.com/bunichi_books/n/n60a3069396b0?hl=en">frog-call guide</a></li>
+      <li><b>2D light maps.</b> Drawing lights additively into a light layer, then multiplying it over the scene, is the standard pixel-art lighting technique. <a href="https://frankforce.com/2d-light-mapping/">Frank Force</a> · <a href="https://github.com/NullTale/LutLight2D">LutLight2D</a></li>
+      <li><b>Bell hours.</b> Temples traditionally rang at dawn and dusk (ake-mutsu, kure-mutsu, about 6:00 and 18:00); many rural temples also ring at noon.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ====================================================================== shared helpers
+const W = 480, H = 200, WORLD_W = 960, GROUND = 158;
+const ZONE_X = { village: 24, forest: 480 };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const mixC = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const lum = (c) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+const rgb = (c, a = 1) => (a >= 1 ? `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})` : `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${Math.max(0, a).toFixed(3)})`);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; return [c, g]; }
+function rect(g, x, y, w, h, col) { if (col) g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h))); }
+function disc(g, cx, cy, r, col) { g.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const hw = Math.floor(Math.sqrt(r * r - dy * dy)); g.fillRect(Math.round(cx - hw), Math.round(cy + dy), hw * 2 + 1, 1); } }
+function line(g, x0, y0, x1, y1, col) {
+  g.fillStyle = col; x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx + dy;
+  for (let i = 0; i < 400; i++) { g.fillRect(x0, y0, 1, 1); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } }
+}
+const hillY = (x) => GROUND - 52 * Math.exp(-(((x - 100) / 70) ** 4));
+const fmt = (h) => { const hh = Math.floor(h) % 24, mm = Math.floor((h % 1) * 60); return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`; };
+function phaseName(h) {
+  if (h >= 4.5 && h < 6.5) return '夜明け dawn';
+  if (h >= 6.5 && h < 10) return '朝 morning';
+  if (h >= 10 && h < 15.5) return '昼 midday';
+  if (h >= 15.5 && h < 17.3) return '午後 afternoon';
+  if (h >= 17.3 && h < 19.5) return '夕暮れ dusk';
+  if (h >= 19.5 && h < 23.5) return '夜 night';
+  return '深夜 late night';
+}
+const inRange = (h, a, b) => (a <= b ? h >= a && h < b : h >= a || h < b);
+
+// ====================================================================== world data
+const HOUSES = [{ x: 222, w: 34 }, { x: 266, w: 30 }, { x: 304, w: 34 }, { x: 404, w: 36 }];
+const TORO = [[92, Math.round(hillY(92))], [40, Math.round(hillY(40))], [196, 157], [214, 158]];
+const BELL = { x: 146, base: Math.round(hillY(146)) };
+const YAGURA_X = 376, FIRE_X = 346;
+const WELL_X = 806, HUT_X = 860;
+const LANTERN_STRINGS = (() => { // festival chōchin strung from the yagura to the houses
+  const pts = [];
+  for (const [x0, y0, x1, y1] of [[YAGURA_X, 130, 322, 140], [YAGURA_X, 130, 432, 140], [YAGURA_X, 130, YAGURA_X - 30, 152]]) {
+    for (let i = 1; i < 9; i++) { const t = i / 9; pts.push([lerp(x0, x1, t), lerp(y0, y1, t) + Math.sin(t * Math.PI) * 6]); }
+  }
+  return pts;
+})();
+const STARS = (() => { const r = rng(42); return Array.from({ length: 90 }, () => ({ x: r() * W | 0, y: r() * 120 | 0, p: r() * 6.28, sp: 0.5 + r() * 1.5 })); })();
+const CLOUDS = (() => { const r = rng(9); return Array.from({ length: 6 }, (_, i) => ({ x: i * 95 + r() * 40, y: 14 + r() * 50, s: 0.6 + r() * 0.8, v: 1.5 + r() * 2.5, puffs: Array.from({ length: 4 + (r() * 3 | 0) }, (_, j) => [j * 7 + r() * 3, r() * 4, 4 + r() * 4]) })); })();
+const FIREFLIES = (() => { const r = rng(5); return Array.from({ length: 34 }, (_, i) => { const forest = i < 22; return { bx: forest ? 620 + r() * 330 : 190 + r() * 400, by: forest ? 120 + r() * 50 : 168 + r() * 16, a: 0.2 + r() * 0.5, b: 0.3 + r() * 0.6, p: r() * 6.28, q: r() * 6.28, c: 0.8 + r() * 1.6 }; }); })();
+
+// ====================================================================== static layers (drawn once)
+let LAYERS = null;
+function buildLayers() {
+  if (LAYERS) return LAYERS;
+  const r = rng(11);
+  // far mountains (parallax .35)
+  const [far, fg] = mk(720, H);
+  for (let x = 0; x < 720; x++) {
+    const y1 = Math.round(84 + 10 * Math.sin(x * 0.011 + 0.5) + 6 * Math.sin(x * 0.029 + 2) + 2 * Math.sin(x * 0.083));
+    rect(fg, x, y1, 1, H - y1, '#a7b5d0');
+    const y2 = Math.round(103 + 9 * Math.sin(x * 0.017 + 1.7) + 5 * Math.sin(x * 0.043) + 2 * Math.sin(x * 0.12 + 1));
+    rect(fg, x, y2, 1, H - y2, '#8696ba'); rect(fg, x, y2, 1, 1, '#9babc9');
+  }
+  // forested hills (parallax .6)
+  const [hill, hg] = mk(820, H);
+  const hy = (x) => 130 + 6 * Math.sin(x * 0.021) + 4 * Math.sin(x * 0.057 + 1);
+  for (let x = 0; x < 820; x++) { const y = Math.round(hy(x)); rect(hg, x, y, 1, H - y, '#3d6a4c'); }
+  for (let x = 0; x < 820; x += 3 + (r() * 3 | 0)) { const rr = 3 + (r() * 4 | 0); const y = hy(x); disc(hg, x, y + 1, rr, r() < 0.5 ? '#467653' : '#3f6c4c'); rect(hg, x - 1, y - rr + 2, 2, 1, '#5e8d5f'); }
+  // the world (parallax 1)
+  const [world, g] = mk(WORLD_W, H);
+  for (let x = 0; x < WORLD_W; x++) {
+    const y = Math.round(x < 230 ? hillY(x) : GROUND);
+    const forest = x > 612;
+    rect(g, x, y, 1, H - y, forest ? '#4c6b3d' : '#6c9a4c');
+    rect(g, x, y, 1, 1, forest ? '#5f8248' : '#8ab865');
+    if (r() < 0.3) rect(g, x, y + 2 + (r() * 22 | 0), 1, 1, forest ? '#41603a' : '#5d8a43');
+  }
+  for (let x = 196; x < 476; x++) { rect(g, x, 160, 1, 4, '#b8996f'); if (r() < 0.22) rect(g, x, 160 + (r() * 4 | 0), 1, 1, '#9c7f5c'); }
+  for (let x = 146; x < 198; x += 4) { const y = Math.round(hillY(x)); rect(g, x, y - 1, 4, 1, '#bdb8ac'); rect(g, x, y, 4, 1, '#8a857a'); }
+  for (let x = 0; x < WORLD_W; x++) { rect(g, x, 181, 1, 3, '#6d7a5c'); if (r() < 0.35) rect(g, x, 181 + (r() * 3 | 0), 2, 1, r() < 0.5 ? '#9a978d' : '#7f7d74'); }
+  temple(g); torii(g, 204); for (const [x, b] of TORO) toro(g, x, b);
+  for (const h of HOUSES) house(g, h, r);
+  yagura(g, YAGURA_X); sacredTree(g, 458, r); paddies(g); scarecrow(g, 560); shishiFrame(g);
+  for (let i = 0; i < 26; i++) { const x = 190 + r() * 420 | 0; if (x > 238 && x < 262) continue; iris(g, x, r); }
+  forestDecor(g, r); well(g, WELL_X); toadHut(g, HUT_X); jizo(g, 886); jizo(g, 894);
+  for (let i = 0; i < 14; i++) iris(g, 620 + r() * 330 | 0, r);
+  LAYERS = { far, hill, world };
+  return LAYERS;
+}
+
+function temple(g) {
+  const hx = 66, hb = Math.round(hillY(hx));
+  rect(g, hx - 26, hb - 2, 52, 3, '#9a968c');
+  rect(g, hx - 20, hb - 14, 40, 12, '#efe6d6');
+  for (let px = hx - 20; px <= hx + 18; px += 6) rect(g, px, hb - 14, 2, 12, '#c8463a');
+  rect(g, hx - 4, hb - 11, 8, 9, '#3a2a22');
+  for (let i = 0; i < 12; i++) { const hw = 30 - i * 1.6; rect(g, hx - hw, hb - 15 - i, hw * 2, 1, i === 0 ? '#2a2a36' : i % 3 === 0 ? '#4a4a5c' : '#3a3a48'); }
+  rect(g, hx - 32, hb - 17, 2, 2, '#3a3a48'); rect(g, hx + 30, hb - 17, 2, 2, '#3a3a48');
+  rect(g, hx - 12, hb - 28, 24, 2, '#2a2a36');
+  rect(g, hx - 14, hb - 30, 3, 2, '#c9a24a'); rect(g, hx + 11, hb - 30, 3, 2, '#c9a24a');
+  const px0 = 118; let y = Math.round(hillY(px0));
+  rect(g, px0 - 8, y - 2, 16, 2, '#9a968c'); y -= 2;
+  for (const [rw, bw, bh] of [[26, 11, 8], [21, 9, 7], [17, 8, 7]]) {
+    rect(g, px0 - bw / 2, y - bh, bw, bh, '#c8463a');
+    rect(g, px0 - bw / 2 + 2, y - bh + 2, bw - 4, 2, '#efe6d6');
+    y -= bh;
+    rect(g, px0 - rw / 2, y - 1, rw, 1, '#2a2a36'); rect(g, px0 - rw / 2 + 1, y - 2, rw - 2, 1, '#3a3a48'); rect(g, px0 - rw / 2 + 3, y - 3, rw - 6, 1, '#4a4a5c');
+    rect(g, px0 - rw / 2 - 1, y - 2, 1, 1, '#3a3a48'); rect(g, px0 + rw / 2, y - 2, 1, 1, '#3a3a48');
+    y -= 3;
+  }
+  rect(g, px0, y - 13, 1, 13, '#c9a24a');
+  for (let i = 0; i < 4; i++) rect(g, px0 - 1, y - 11 + i * 2, 3, 1, '#b08a3a');
+  const { x: bx, base: bb } = BELL;
+  rect(g, bx - 8, bb - 13, 2, 13, '#6a4330'); rect(g, bx + 6, bb - 13, 2, 13, '#6a4330');
+  rect(g, bx - 9, bb - 14, 18, 1, '#5a3a28');
+  for (let i = 0; i < 5; i++) rect(g, bx - 11 + i, bb - 15 - i, 22 - i * 2, 1, i ? '#3a3a48' : '#2a2a36');
+  rect(g, bx - 9, bb - 1, 18, 1, '#9a968c');
+}
+function torii(g, x) {
+  const b = Math.round(Math.min(GROUND, hillY(x)));
+  rect(g, x - 6, b - 18, 2, 18, '#d0452f'); rect(g, x + 5, b - 18, 2, 18, '#d0452f');
+  rect(g, x - 8, b - 15, 17, 1, '#d0452f'); rect(g, x - 9, b - 20, 19, 2, '#2c2a2e');
+  rect(g, x - 10, b - 21, 2, 1, '#2c2a2e'); rect(g, x + 9, b - 21, 2, 1, '#2c2a2e'); rect(g, x - 1, b - 18, 2, 3, '#d0452f');
+}
+function toro(g, x, b) {
+  rect(g, x - 2, b - 2, 5, 2, '#8f8b80'); rect(g, x, b - 6, 1, 4, '#9d998f'); rect(g, x - 1, b - 9, 3, 3, '#a9a59b');
+  rect(g, x, b - 8, 1, 1, '#3a3530'); rect(g, x - 2, b - 11, 5, 2, '#8f8b80'); rect(g, x, b - 12, 1, 1, '#8f8b80');
+}
+function house(g, h, r) {
+  const { x, w } = h, b = GROUND;
+  rect(g, x - 1, b - 2, w + 2, 2, '#8a867c');
+  rect(g, x, b - 13, w, 11, '#5a3f2c');
+  rect(g, x - 2, b - 3, w + 4, 1, '#8a6a4a');
+  h.windows = [[x + 4, b - 11, 7, 6], [x + w - 11, b - 11, 7, 6]];
+  for (const [wx, wy, ww, wh] of h.windows) { rect(g, wx, wy, ww, wh, '#e9e1cf'); for (let i = 2; i < ww; i += 3) rect(g, wx + i, wy, 1, wh, '#9c8a6c'); rect(g, wx, wy + 3, ww, 1, '#9c8a6c'); }
+  rect(g, x + Math.round(w / 2) - 3, b - 11, 6, 8, '#3a2a20');
+  const eave = b - 13, top = b - 33, cx = x + w / 2;
+  for (let y = eave; y >= top; y--) {
+    const k = (eave - y) / (eave - top), hw = (w / 2 + 5) * (1 - k * 0.72);
+    for (let xx = Math.round(cx - hw); xx <= Math.round(cx + hw); xx++) {
+      const n = r(); g.fillStyle = y === eave ? '#5c4630' : n < 0.12 ? '#9a7c4c' : n > 0.9 ? '#cdb078' : '#b49561'; g.fillRect(xx, y, 1, 1);
+    }
+  }
+  rect(g, cx - 6, top - 2, 12, 3, '#6b5638'); rect(g, cx - 2, top + 2, 4, 3, '#3a2c1e');
+  h.vent = [cx, top + 2]; h.ridge = top - 2;
+}
+function yagura(g, x) {
+  const b = GROUND;
+  rect(g, x - 10, b - 20, 2, 20, '#7a4e32'); rect(g, x + 8, b - 20, 2, 20, '#7a4e32');
+  line(g, x - 9, b - 1, x + 8, b - 13, '#6a4330'); line(g, x + 8, b - 1, x - 9, b - 13, '#6a4330');
+  rect(g, x - 12, b - 22, 24, 3, '#8a5a3a');
+  for (let i = 0; i < 24; i += 2) rect(g, x - 12 + i, b - 19, 2, 2, i % 4 ? '#f0e8dc' : '#d0452f');
+  rect(g, x - 8, b - 33, 1, 11, '#7a4e32'); rect(g, x + 7, b - 33, 1, 11, '#7a4e32');
+  disc(g, x, b - 26, 3, '#8a3a2a'); rect(g, x - 3, b - 27, 7, 1, '#e8d8b0');
+  for (let i = 0; i < 3; i++) rect(g, x - 10 + i, b - 34 - i, 20 - i * 2, 1, i ? '#3a3a48' : '#2a2a36');
+}
+function sacredTree(g, x, r) {
+  rect(g, x - 3, GROUND - 30, 6, 30, '#5a4535');
+  for (let i = 0; i < 30; i += 3) rect(g, x - 3 + (r() * 6 | 0), GROUND - 30 + i, 1, 2, '#4a3828');
+  const blobs = [[0, -40, 16], [-12, -34, 11], [12, -35, 12], [-6, -50, 11], [8, -49, 10]];
+  for (const [dx, dy, rr] of blobs) disc(g, x + dx, GROUND + dy, rr, '#3a6a43');
+  for (const [dx, dy, rr] of blobs) disc(g, x + dx - 2, GROUND + dy - 2, rr - 4, '#4b7d4e');
+  for (let i = 0; i < 70; i++) { const a = r() * 6.28, d = r() * 18; rect(g, x + Math.cos(a) * d, GROUND - 44 + Math.sin(a) * d * 0.7, 1, 1, '#6a9a5e'); }
+  rect(g, x - 4, GROUND - 22, 8, 2, '#e8d9a8');
+  for (let i = -3; i < 4; i += 3) { rect(g, x + i, GROUND - 20, 1, 1, '#ffffff'); rect(g, x + i + 1, GROUND - 19, 1, 1, '#ffffff'); rect(g, x + i, GROUND - 18, 1, 1, '#ffffff'); }
+}
+function paddies(g) {
+  rect(g, 476, 164, 130, 1, '#7a8f4a'); rect(g, 476, 165, 130, 7, '#86aab0'); rect(g, 476, 172, 130, 1, '#7a8f4a');
+  rect(g, 470, 173, 140, 1, '#7a8f4a'); rect(g, 470, 174, 140, 7, '#7fa3aa');
+}
+function scarecrow(g, x) {
+  rect(g, x, 154, 1, 14, '#6a4a30'); rect(g, x - 5, 158, 11, 1, '#6a4a30'); rect(g, x - 2, 158, 5, 5, '#3e4f7a');
+  rect(g, x - 1, 155, 3, 3, '#e8dcc0'); rect(g, x - 3, 154, 7, 1, '#c9a860'); rect(g, x - 1, 153, 3, 1, '#c9a860');
+}
+function shishiFrame(g) {
+  const x = 250;
+  rect(g, x - 5, 173, 1, 9, '#7a9a4a'); rect(g, x + 4, 173, 1, 9, '#7a9a4a');
+  disc(g, x + 8, 180, 2, '#8f8b80');
+  rect(g, x - 15, 177, 8, 4, '#8f8b80'); rect(g, x - 14, 177, 6, 1, '#6a8fa8');
+  line(g, x - 26, 167, x - 12, 169, '#8fb35a'); line(g, x - 26, 168, x - 12, 170, '#6f9442');
+  rect(g, x - 27, 166, 2, 16, '#7a9a4a');
+}
+function iris(g, x, r) {
+  const y = 181;
+  for (let i = 0; i < 3; i++) line(g, x + i, y, x + i + (r() < 0.5 ? -1 : 1), y - 4 - (r() * 3 | 0), '#5f8a42');
+  if (r() < 0.6) { rect(g, x, y - 7, 2, 1, '#7a5ab8'); rect(g, x + 1, y - 8, 1, 1, '#9a7ad8'); }
+}
+function forestDecor(g, r) {
+  for (const [count, front] of [[26, 0], [22, 1]]) {
+    for (let i = 0; i < count; i++) {
+      const x = 622 + (r() * 150 | 0), top = 18 + (r() * 52 | 0);
+      const c1 = front ? '#86b85e' : '#5f8a4a', c2 = front ? '#5f8a42' : '#476b37';
+      rect(g, x, top, 2, 160 - top, c1); rect(g, x + 1, top, 1, 160 - top, c2);
+      for (let y = top + 6; y < 158; y += 9 + (r() * 3 | 0)) rect(g, x, y, 2, 1, c2);
+      for (let k = 0; k < 6; k++) { const ly = top + (r() * 60 | 0), dir = r() < 0.5 ? -1 : 1; line(g, x + 1, ly, x + 1 + dir * (3 + (r() * 4 | 0)), ly + 2, front ? '#6da04c' : '#4f7a3c'); }
+    }
+  }
+  for (const cx of [778, 792, 830, 846, 880, 906, 930, 952, 918]) {
+    const hgt = 70 + (r() * 40 | 0), base = 160;
+    rect(g, cx - 1, base - 20, 3, 20, '#4a3528');
+    for (let y = base - hgt; y < base - 12; y++) {
+      const k = (y - (base - hgt)) / hgt, hw = Math.round(2 + k * 11 + (y % 6 < 2 ? 1 : 0));
+      rect(g, cx - hw, y, hw * 2 + 1, 1, y % 6 < 3 ? '#2f5a43' : '#28503b'); rect(g, cx - hw, y, 1, 1, '#3d6e52');
+    }
+  }
+  for (let i = 0; i < 40; i++) { const x = 612 + r() * 348 | 0, y = 163 + r() * 16 | 0; line(g, x, y, x - 2, y - 3, '#5f8a48'); line(g, x, y, x + 2, y - 3, '#5f8a48'); }
+}
+function well(g, x) {
+  const b = 161;
+  rect(g, x - 8, b - 10, 16, 10, '#8f8b80');
+  for (let yy = b - 10; yy < b; yy += 3) for (let xx = x - 8 + ((yy / 3) % 2) * 2; xx < x + 8; xx += 4) rect(g, xx, yy, 1, 2, '#77736a');
+  rect(g, x - 9, b - 11, 18, 1, '#a6a298');
+  rect(g, x - 7, b - 26, 2, 15, '#6b4a32'); rect(g, x + 5, b - 26, 2, 15, '#6b4a32');
+  for (let i = 0; i < 4; i++) rect(g, x - 11 + i, b - 27 - i, 22 - i * 2, 1, i ? '#5a3d29' : '#4a3020');
+  rect(g, x - 1, b - 25, 2, 2, '#8a8a8a'); rect(g, x, b - 23, 1, 8, '#c9b68a'); rect(g, x - 2, b - 15, 4, 3, '#8a6a4a');
+}
+function toadHut(g, x) {
+  const b = 161;
+  rect(g, x - 8, b - 9, 16, 9, '#7a5a3a'); disc(g, x, b - 4, 3, '#24180f'); rect(g, x - 3, b - 4, 7, 4, '#24180f');
+  for (let i = 0; i < 9; i++) { const hw = 11 - i; rect(g, x - hw, b - 10 - i, hw * 2, 1, i % 3 ? '#a8895a' : '#94784c'); }
+  rect(g, x - 3, b - 20, 6, 2, '#7a6040'); rect(g, x + 9, b - 12, 1, 3, '#5a4030');
+}
+function jizo(g, x) { const b = 161; rect(g, x - 2, b - 7, 4, 7, '#9a968c'); disc(g, x, b - 9, 2, '#a6a298'); rect(g, x - 2, b - 6, 4, 2, '#c8463a'); }
+
+// ====================================================================== sprites (drawn per frame)
+const SKIN = '#f0c8a0', HAIR = '#2a2220';
+function person(g, x, y, o) { // 3px wide, ~8px tall villager / kid
+  const { body = '#3e4f7a', h = 8, frame = 0, hat = null, basket = false, umbrella = null, arms = 0, sit = false } = o;
+  const top = y - h;
+  if (umbrella) { rect(g, x - 2, top - 4, 7, 1, umbrella); rect(g, x - 1, top - 5, 5, 1, umbrella); rect(g, x + 1, top - 3, 1, 3, '#6a4a30'); }
+  rect(g, x, top, 3, 1, hat || HAIR);
+  if (hat) rect(g, x - 1, top + 1, 5, 1, hat);
+  rect(g, x, top + (hat ? 2 : 1), 3, 2, SKIN);
+  const bodyTop = top + (hat ? 4 : 3), bodyH = sit ? 2 : Math.max(2, h - (hat ? 6 : 5));
+  rect(g, x, bodyTop, 3, bodyH, body);
+  if (arms === 1) { rect(g, x - 1, bodyTop - 1, 1, 2, SKIN); rect(g, x + 3, bodyTop + 1, 1, 1, SKIN); }
+  else if (arms === 2) { rect(g, x - 1, bodyTop + 1, 1, 1, SKIN); rect(g, x + 3, bodyTop - 1, 1, 2, SKIN); }
+  if (basket) rect(g, x + 2, bodyTop, 3, 3, '#a8854f');
+  const ly = bodyTop + bodyH;
+  if (!sit) { if (frame) { rect(g, x, ly, 1, y - ly, '#2a2a30'); rect(g, x + 2, ly, 1, y - ly, '#2a2a30'); } else rect(g, x + 1, ly, 1, y - ly, '#2a2a30'); }
+}
+function toad(g, x, y, big, croak) {
+  const w = big ? 5 : 3;
+  rect(g, x, y - 2, w, 2, '#7a6a3e'); rect(g, x + 1, y - 3, w - 2, 1, '#8a7a48');
+  rect(g, x, y - 3, 1, 1, '#d8c46a'); rect(g, x + w - 1, y - 3, 1, 1, '#d8c46a');
+  if (croak) rect(g, x + 1, y - 1, w - 2, 1, '#e8dca8');
+}
+function bird(g, x, y, frame, col) { rect(g, x, y, 1, 1, col); if (frame) { rect(g, x - 1, y - 1, 1, 1, col); rect(g, x + 1, y - 1, 1, 1, col); } else { rect(g, x - 1, y + 1, 1, 1, col); rect(g, x + 1, y + 1, 1, 1, col); } }
+
+// ====================================================================== environment by hour
+// [hour, sky top, sky bottom, ambient light]
+const KF = [
+  [0, [12, 16, 40], [40, 44, 84], [70, 82, 140]], [4.5, [12, 16, 40], [40, 44, 84], [70, 82, 140]],
+  [5.5, [40, 50, 100], [230, 150, 140], [150, 130, 160]], [7, [110, 160, 220], [250, 215, 185], [235, 222, 212]],
+  [10, [96, 165, 238], [198, 228, 250], [255, 255, 255]], [15, [100, 165, 235], [210, 230, 245], [255, 252, 245]],
+  [17.3, [90, 110, 190], [255, 185, 125], [255, 215, 172]], [18.5, [62, 52, 122], [240, 125, 112], [205, 155, 170]],
+  [19.6, [30, 30, 80], [92, 62, 122], [112, 100, 160]], [21, [12, 16, 40], [40, 44, 84], [70, 82, 140]], [24, [12, 16, 40], [40, 44, 84], [70, 82, 140]],
+];
+function environment(hour, weather) {
+  let i = 0; while (i < KF.length - 2 && hour >= KF[i + 1][0]) i++;
+  const [h0, t0, b0, a0] = KF[i], [h1, t1, b1, a1] = KF[i + 1];
+  const k = clamp((hour - h0) / (h1 - h0 || 1), 0, 1);
+  let top = mixC(t0, t1, k), bottom = mixC(b0, b1, k), ambient = mixC(a0, a1, k);
+  const rain = weather === 'rain';
+  if (rain) { const ov = (c, d) => { const l = lum(c); return mixC(c, [l * 0.95, l, l * 1.08], 0.8).map((v) => v * d); }; top = ov(top, 0.7); bottom = ov(bottom, 0.78); ambient = ov(ambient, 0.82); }
+  const dark = 1 - lum(ambient) / 255;
+  return { hour, top, bottom, ambient, dark, rain, lights: clamp((dark - 0.16) / 0.3, 0, 1), stars: rain ? 0 : clamp((dark - 0.35) / 0.25, 0, 1) };
+}
+
+// ====================================================================== a view = one canvas rendering the world
+function createView(canvas) {
+  const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
+  const [buf, bg] = mk(W, H), [mask, mg] = mk(W, H), [light, lg] = mk(W, H);
+  return { canvas, g, buf, bg, mask, mg, light, lg, camX: ZONE_X.village, lastShishi: 0, bellAt: -1e9, onShishi: null, rainDrops: Array.from({ length: 150 }, (_, i) => ({ x: (i * 37) % W, y: (i * 53) % H, v: 140 + (i % 7) * 18 })) };
+}
+
+function render(view, s, ms) {
+  const L = buildLayers();
+  const env = environment(s.hour, s.weather);
+  const { g, bg, mg, lg } = view, camX = Math.round(view.camX), t = ms / 1000, h = s.hour;
+  const X = (x) => Math.round(x - camX);
+
+  // ---- sky (not affected by the light layer: it *is* the light)
+  const sky = g.createLinearGradient(0, 0, 0, 150);
+  sky.addColorStop(0, rgb(env.top)); sky.addColorStop(1, rgb(env.bottom));
+  g.fillStyle = sky; g.fillRect(0, 0, W, H);
+  if (env.stars > 0.02) for (const st of STARS) { g.fillStyle = `rgba(255,250,235,${(env.stars * (0.4 + 0.6 * Math.abs(Math.sin(t * st.sp + st.p)))).toFixed(2)})`; g.fillRect(st.x, st.y, 1, 1); }
+  if (!env.rain && h > 5.6 && h < 18.4) { const k = (h - 6) / 12, sx = 40 + k * 400, sy = 128 - Math.sin(k * Math.PI) * 108; disc(g, sx, sy, 14, 'rgba(255,240,200,.18)'); disc(g, sx, sy, 9, 'rgba(255,240,200,.35)'); disc(g, sx, sy, 6, '#fff3d6'); }
+  if (!env.rain && (h > 18 || h < 6.2)) { const hh = h > 12 ? h - 18 : h + 6, k = hh / 12, mx = 40 + k * 400, my = 128 - Math.sin(k * Math.PI) * 100; disc(g, mx, my, 9, 'rgba(230,230,255,.12)'); disc(g, mx, my, 5, '#f4f1e2'); rect(g, mx - 2, my - 1, 2, 2, '#d8d4c4'); rect(g, mx + 1, my + 2, 1, 1, '#d8d4c4'); }
+  const cloudCol = mixC(mixC([255, 255, 255], env.bottom, 0.35), env.ambient, 0.35).map((v, i) => v * (env.ambient[i] / 255) * 0.6 + v * 0.4);
+  g.fillStyle = rgb(cloudCol, env.rain ? 0.95 : 0.85);
+  for (const c of CLOUDS) {
+    const cx = ((c.x + t * c.v * (env.rain ? 2 : 1) - camX * 0.1) % (W + 80) + W + 80) % (W + 80) - 60;
+    for (const [dx, dy, r] of c.puffs) { const rr = Math.round(r * c.s * (env.rain ? 1.6 : 1)); for (let yy = -rr; yy <= 0; yy++) { const hw = Math.floor(Math.sqrt(rr * rr - yy * yy)); g.fillRect(Math.round(cx + dx * c.s - hw), Math.round(c.y + dy + yy), hw * 2 + 1, 1); } g.fillRect(Math.round(cx + dx * c.s - rr), Math.round(c.y + dy), rr * 2, 2); }
+  }
+  if (env.rain) { g.fillStyle = rgb(cloudCol.map((v) => v * 0.8), 0.9); for (let x = 0; x < W; x += 2) { const y = 22 + Math.sin(x * 0.05 + t * 0.2) * 5; g.fillRect(x, 0, 2, Math.round(y)); } }
+
+  // ---- scene buffer: parallax layers + animated things
+  bg.clearRect(0, 0, W, H);
+  bg.drawImage(L.far, -Math.round(camX * 0.35), 0);
+  const mistA = env.rain ? 0.35 : clamp(1 - Math.abs(h - 6.5) / 2, 0, 1) * 0.55 + 0.08;
+  bg.fillStyle = `rgba(220,226,240,${mistA.toFixed(3)})`; bg.fillRect(0, 108, W, 30);
+  bg.drawImage(L.hill, -Math.round(camX * 0.6), 0);
+  bg.drawImage(L.world, -camX, 0);
+
+  // creek
+  for (let y = 184; y < H; y++) { bg.fillStyle = y < 186 ? '#79a7c4' : y < 192 ? '#5f8fb0' : '#4f7fa2'; bg.fillRect(0, y, W, 1); }
+  for (let x = 0; x < W; x++) { const wx = x + camX; for (const row of [186, 190, 195]) { const v = Math.sin(wx * 0.31 - t * 2.2 + row) + Math.sin(wx * 0.13 + t * 1.3 + row * 2); if (v > 1.55) { bg.fillStyle = '#d8eef8'; bg.fillRect(x, row, 1, 1); } } }
+  // rice, swaying in travelling gusts
+  const gust = 1.2 + Math.sin(t * 0.21) * 0.6 + (env.rain ? 0.6 : 0);
+  for (const [x0, x1, base] of [[478, 604, 171], [472, 608, 180]]) {
+    for (let x = x0; x < x1; x += 2) {
+      const sx = X(x); if (sx < -2 || sx > W + 2) continue;
+      const sway = Math.round(Math.sin(x * 0.09 - t * 2.4) * gust);
+      bg.fillStyle = '#5e9a3e'; bg.fillRect(sx, base - 3, 1, 3);
+      bg.fillStyle = '#79b04a'; bg.fillRect(sx + Math.round(sway * 0.5), base - 5, 1, 2);
+      bg.fillStyle = '#a5cf62'; bg.fillRect(sx + sway, base - 6, 1, 1);
+    }
+  }
+  // shishi-odoshi: fills, tips, pours, knocks back
+  const P = 9000, ph = (ms % P) / P;
+  let ang = 0.42 + Math.sin(t * 7) * 0.01;
+  if (ph > 0.8 && ph < 0.86) ang = lerp(0.42, -0.6, (ph - 0.8) / 0.06);
+  else if (ph >= 0.86 && ph < 0.9) ang = -0.6;
+  else if (ph >= 0.9 && ph < 0.93) ang = lerp(-0.6, 0.42, (ph - 0.9) / 0.03);
+  const pvx = X(250), pvy = 174, ex = pvx - Math.cos(ang) * 11, ey = pvy - Math.sin(ang) * 11, cx2 = pvx + Math.cos(ang) * 7, cy2 = pvy + Math.sin(ang) * 7;
+  line(bg, ex, ey, cx2, cy2, '#9ab84f'); line(bg, ex, ey + 1, cx2, cy2 + 1, '#6f9442'); rect(bg, pvx, pvy - 1, 1, 3, '#5a7a32');
+  if (ph < 0.8) { for (let i = 0; i < 3; i++) rect(bg, X(238) + 0, 171 + ((t * 30 + i * 2) % 4), 1, 1, '#cfe6f2'); }
+  if (ph >= 0.84 && ph < 0.9) for (let i = 0; i < 4; i++) rect(bg, ex - 1 + (i % 2), ey + 1 + ((t * 80 + i * 3) % 8), 1, 1, '#cfe6f2');
+  if (view.onShishi && ph >= 0.93 && view.lastShishi < 0.93) view.onShishi();
+  view.lastShishi = ph;
+  // temple bell, swinging after a strike
+  const since = ms - view.bellAt, swing = since < 3000 ? Math.round(Math.sin(since / 110) * 1.4 * (1 - since / 3000)) : 0;
+  rect(bg, X(BELL.x - 2 + swing), BELL.base - 12, 5, 6, '#5d6b5e'); rect(bg, X(BELL.x - 1 + swing), BELL.base - 11, 1, 4, '#7d8b7a'); rect(bg, X(BELL.x - 3 + swing), BELL.base - 7, 7, 1, '#4d5a4e');
+  // chimney smoke
+  const smoke = inRange(h, 6, 9) || inRange(h, 17, 20) ? 1 : inRange(h, 20, 23) ? 0.5 : 0.18;
+  for (const hs of HOUSES) for (let i = 0; i < 7; i++) {
+    const age = ((t * 0.12 + i / 7 + hs.x * 0.01) % 1);
+    const sx = X(hs.vent[0] + age * age * 16 + Math.sin(age * 6 + i) * 1.5), sy = hs.vent[1] - age * 34;
+    bg.fillStyle = `rgba(214,214,214,${((1 - age) * 0.55 * smoke).toFixed(3)})`; bg.fillRect(Math.round(sx), Math.round(sy), age > 0.4 ? 3 : 2, 2);
+  }
+
+  // ---- people and animals (scripted by the hour)
+  const village = (x) => X(x) > -10 && X(x) < W + 10;
+  if (!env.rain && inRange(h, 5.6, 8.8)) { const mx = 188 + Math.sin(t * 0.8) * 5; person(bg, X(mx), Math.round(hillY(mx)) - 1, { body: '#2f2f38', h: 8, frame: 0, arms: Math.sin(t * 5) > 0 ? 1 : 2 }); line(bg, X(mx) + 3, Math.round(hillY(mx)) - 4, X(mx) + 5 + Math.round(Math.sin(t * 5) * 2), Math.round(hillY(mx)), '#c9a860'); }
+  if (!env.rain && inRange(h, 6, 10.5)) { const bend = Math.sin(t * 1.4) > 0; person(bg, X(520), 180, { body: '#3e4f7a', h: bend ? 6 : 8, hat: '#c9a860' }); }
+  if (!env.rain && inRange(h, 8.5, 17)) {
+    for (let i = 0; i < 3; i++) {
+      const x = 370 + 24 * Math.sin(t * 0.55 + i * 2.1) + 7 * Math.sin(t * 1.7 + i * 1.3), jump = Math.sin(t * 3.1 + i * 5) > 0.96 ? 2 : 0;
+      person(bg, X(x), 163 - jump, { body: ['#d65a5a', '#4a78c8', '#e8b84a'][i], h: 6, frame: Math.floor(ms / 120 + i) % 2 });
+    }
+    const kx = 402, kiteX = kx + 30 + Math.sin(t * 0.7) * 5, kiteY = 66 + Math.sin(t * 1.1) * 5;
+    person(bg, X(kx), 163, { body: '#7a9a4a', h: 6, arms: 1 });
+    for (let i = 0; i <= 20; i++) { const u = i / 20; rect(bg, X(lerp(kx - 1, kiteX, u)), lerp(156, kiteY + 3, u) + Math.sin(u * Math.PI) * 6, 1, 1, 'rgba(235,228,212,.7)'); }
+    rect(bg, X(kiteX) - 1, kiteY, 3, 4, '#d0452f'); rect(bg, X(kiteX), kiteY - 1, 1, 6, '#d0452f'); rect(bg, X(kiteX), kiteY + 1, 1, 1, '#f0e8dc');
+    for (let i = 0; i < 4; i++) rect(bg, X(kiteX) + Math.round(Math.sin(t * 3 + i) * 1.5), kiteY + 6 + i * 2, 1, 1, '#f0e8dc');
+  }
+  if (env.rain && inRange(h, 7, 20)) for (let i = 0; i < 2; i++) { const p = ((t * 0.035 + i * 0.5) % 1), x = 200 + Math.abs(p * 2 - 1) * 260; person(bg, X(x), 163, { body: '#3e4f7a', h: 8, frame: Math.floor(ms / 160) % 2, umbrella: i ? '#c8463a' : '#3a5a8a' }); }
+  if (!env.rain && inRange(h, 16.5, 19.4)) for (let i = 0; i < 3; i++) { const x = 476 - ((t * 9 + i * 70) % 250); if (x > 228) person(bg, X(x), 163, { body: '#5a4a6a', h: 8, frame: Math.floor(ms / 150 + i) % 2, hat: '#c9a860', basket: true }); }
+  const night = inRange(h, 19.3, 23.6) && !env.rain;
+  if (night) {
+    for (const [dx, sit] of [[-12, false], [-7, true], [9, true], [13, false]]) person(bg, X(FIRE_X + dx), 163, { body: dx < 0 ? '#5a4a6a' : '#3e4f7a', h: sit ? 5 : 8, sit });
+    rect(bg, X(FIRE_X) - 4, 162, 9, 1, '#4a3020'); rect(bg, X(FIRE_X) - 3, 161, 7, 1, '#5a3a24');
+  }
+  if (night && s.festival) {
+    const ring = [];
+    for (let i = 0; i < 8; i++) { const a = t * 0.35 + (i * Math.PI * 2) / 8; ring.push({ x: YAGURA_X + Math.cos(a) * 18, y: 163 + Math.round(Math.sin(a) * 2), i }); }
+    ring.sort((a, b) => a.y - b.y).forEach((d) => person(bg, X(d.x), d.y, { body: d.i % 2 ? '#e8a0b0' : '#7fb0d8', h: 8, arms: (Math.floor(t * 1.5) + d.i) % 2 ? 1 : 2 }));
+  }
+  if (inRange(h, 21.5, 5) && !env.rain) { const hs = HOUSES[1], cx = X(hs.x + hs.w / 2); rect(bg, cx, hs.ridge - 3, 4, 3, '#1a1a22'); rect(bg, cx, hs.ridge - 4, 1, 1, '#1a1a22'); rect(bg, cx + 3, hs.ridge - 4, 1, 1, '#1a1a22'); rect(bg, cx + 4, hs.ridge - 2, 2, 1, '#1a1a22'); }
+  // toad family: out of the hut from 20:00 to 4:30, one after another
+  if (inRange(h, 20, 4.5)) {
+    const hrs = h >= 20 ? h - 20 : h + 4;
+    [[HUT_X - 12, true, 0], [HUT_X - 20, false, 0.25], [HUT_X - 26, false, 0.5]].forEach(([tx, big, at], i) => {
+      if (hrs < at) return;
+      const hop = Math.max(0, Math.sin(t * 0.9 + i * 2)) > 0.97 ? 2 : 0;
+      toad(bg, X(tx + Math.round(Math.sin(t * 0.07 + i) * 3)), 163 - hop, big, Math.sin(t * 1.6 + i * 2.5) > 0.82);
+    });
+  }
+  if (inRange(h, 22, 4.5)) { const ox = X(930); rect(bg, ox, 100, 3, 4, '#2a241e'); rect(bg, ox, 99, 1, 1, '#2a241e'); rect(bg, ox + 2, 99, 1, 1, '#2a241e'); }
+
+  // ---- lighting: ambient layer + additive lights, multiplied into the scene buffer
+  mg.clearRect(0, 0, W, H); mg.drawImage(view.buf, 0, 0);
+  lg.globalCompositeOperation = 'source-over'; lg.fillStyle = rgb(env.ambient); lg.fillRect(0, 0, W, H);
+  const k = env.lights;
+  const lamp = (x, y, r, col, a) => { const sx = x - camX; if (sx < -r || sx > W + r || a <= 0.01) return; const gr = lg.createRadialGradient(sx, y, 0, sx, y, r); gr.addColorStop(0, rgb(col, a)); gr.addColorStop(1, rgb(col, 0)); lg.fillStyle = gr; lg.fillRect(sx - r, y - r, r * 2, r * 2); };
+  const lateOff = inRange(h, 23.6, 5) ? 0.25 : 1;
+  if (k > 0) {
+    lg.globalCompositeOperation = 'lighter';
+    HOUSES.forEach((hs, i) => { const on = i === 2 ? 1 : lateOff; for (const [wx, wy] of hs.windows) lamp(wx + 3, wy + 3, 20, [200, 130, 50], 0.85 * k * on); });
+    for (const [x, b] of TORO) lamp(x, b - 8, 13, [210, 150, 70], 0.8 * k);
+    if (inRange(h, 20, 4.5)) lamp(HUT_X + 9, 151, 11, [210, 150, 70], 0.8 * k);
+    if (night) lamp(FIRE_X, 158, 46 + Math.sin(t * 9) * 3, [235, 120, 40], 0.95 * k);
+    if (night && s.festival) for (const [x, y] of LANTERN_STRINGS) lamp(x, y, 9, [230, 100, 60], 0.55 * k);
+    if (env.stars > 0.3) for (const f of FIREFLIES) { const pulse = Math.max(0, Math.sin(t * f.c + f.p)) ** 3; lamp(f.bx + Math.sin(t * f.a + f.p) * 14, f.by + Math.sin(t * f.b + f.q) * 7, 7, [150, 230, 90], pulse * 0.7); }
+    lg.globalCompositeOperation = 'source-over';
+  }
+  bg.globalCompositeOperation = 'multiply'; bg.drawImage(view.light, 0, 0);
+  bg.globalCompositeOperation = 'destination-in'; bg.drawImage(view.mask, 0, 0);
+  bg.globalCompositeOperation = 'source-over';
+  g.drawImage(view.buf, 0, 0);
+
+  // ---- emissive: light sources themselves
+  if (k > 0.02) {
+    HOUSES.forEach((hs, i) => { const on = (i === 2 ? 1 : lateOff) * k; for (const [wx, wy, ww, wh] of hs.windows) { g.fillStyle = `rgba(255,214,140,${(0.9 * on).toFixed(3)})`; g.fillRect(X(wx), wy, ww, wh); g.fillStyle = `rgba(150,105,60,${(0.6 * on).toFixed(3)})`; for (let x2 = 2; x2 < ww; x2 += 3) g.fillRect(X(wx) + x2, wy, 1, wh); g.fillRect(X(wx), wy + 3, ww, 1); } });
+    for (const [x, b] of TORO) { g.fillStyle = `rgba(255,210,130,${k.toFixed(3)})`; g.fillRect(X(x), b - 8, 1, 1); }
+    if (inRange(h, 20, 4.5)) { g.fillStyle = `rgba(255,140,90,${k.toFixed(3)})`; g.fillRect(X(HUT_X + 8), 149, 3, 3); }
+    if (night && s.festival) for (const [x, y] of LANTERN_STRINGS) { g.fillStyle = `rgba(232,80,58,${k.toFixed(3)})`; g.fillRect(X(x) - 1, Math.round(y), 2, 3); g.fillStyle = `rgba(255,214,160,${k.toFixed(3)})`; g.fillRect(X(x) - 1, Math.round(y) + 1, 1, 1); }
+    if (night) for (let i = 0; i < 9; i++) { const fx = X(FIRE_X) - 3 + (i % 7), fh = 3 + Math.round(Math.abs(Math.sin(t * 7 + i * 1.7)) * 5); g.fillStyle = i % 3 ? '#ffb040' : '#ffe08a'; g.fillRect(fx, 161 - fh, 1, fh); }
+    if (inRange(h, 22, 4.5) && Math.sin(t * 0.7) > -0.9) { g.fillStyle = '#ffd860'; g.fillRect(X(930), 101, 1, 1); g.fillRect(X(932), 101, 1, 1); }
+    if (inRange(h, 21.5, 5) && !env.rain && Math.sin(t * 0.5) > -0.85) { const hs = HOUSES[1], cx = X(hs.x + hs.w / 2); g.fillStyle = '#c8f070'; g.fillRect(cx + 1, hs.ridge - 2, 1, 1); }
+    if (env.stars > 0.3) for (const f of FIREFLIES) { const pulse = Math.max(0, Math.sin(t * f.c + f.p)) ** 3; if (pulse < 0.05) continue; const fx = X(f.bx + Math.sin(t * f.a + f.p) * 14), fy = Math.round(f.by + Math.sin(t * f.b + f.q) * 7); g.fillStyle = `rgba(220,255,140,${pulse.toFixed(3)})`; g.fillRect(fx, fy, 1, 1); g.fillStyle = `rgba(200,255,120,${(pulse * 0.35).toFixed(3)})`; g.fillRect(fx - 1, fy, 3, 1); g.fillRect(fx, fy - 1, 1, 3); }
+  }
+  // bell ripple
+  if (since < 4000) { const a = 1 - since / 4000; for (const rr of [since / 30, since / 30 - 14, since / 30 - 28]) { if (rr <= 0) continue; g.strokeStyle = `rgba(255,248,230,${(a * 0.35).toFixed(3)})`; g.lineWidth = 1; g.beginPath(); g.arc(X(BELL.x) + 0.5, BELL.base - 9, rr, Math.PI * 1.05, Math.PI * 1.95); g.stroke(); } }
+  // birds: sparrows by day, crows heading home at dusk
+  if (!env.rain && inRange(h, 6, 16.5)) for (let i = 0; i < 5; i++) { const bx = ((t * 26 + i * 9) % 720) - 120, by = 46 + i * 4 + Math.sin(t * 3 + i) * 2; bird(g, Math.round(bx), Math.round(by), Math.floor(ms / 140 + i) % 2, '#4a3c30'); }
+  if (!env.rain && inRange(h, 16.8, 19.2)) for (let i = 0; i < 6; i++) { const bx = W + 60 - ((t * 20 + i * 14) % (W + 160)), by = 52 + (i % 3) * 7 + Math.sin(t * 2 + i) * 2; bird(g, Math.round(bx), Math.round(by), Math.floor(ms / 200 + i) % 2, '#1a1a22'); }
+  // rain
+  if (env.rain) {
+    g.fillStyle = 'rgba(200,214,232,.5)';
+    for (const d of view.rainDrops) { const y = (d.y + t * d.v) % (H + 10) - 5, x = (d.x + t * d.v * 0.18) % W; g.fillRect(Math.round(x), Math.round(y), 1, 3); }
+    g.fillStyle = 'rgba(220,235,248,.6)';
+    for (let i = 0; i < 10; i++) { const ph2 = (t * 1.3 + i * 0.37) % 1, x = (i * 53 + Math.floor(t * 1.3 + i * 0.37) * 97) % W, r = Math.round(ph2 * 4); g.fillRect(x - r, 188 + (i % 3) * 4, r * 2 + 1, 1); }
+  }
+}
+
+// ====================================================================== sound: synthesis + director
+const AU = { ctx: null, master: null, wet: null, buffers: {}, loops: {}, on: false, festivalBeat: 0 };
+function ac() {
+  if (!AU.ctx) {
+    const c = new AudioContext(); AU.ctx = c;
+    AU.master = c.createGain(); AU.master.gain.value = 0.8; AU.master.connect(c.destination);
+    const conv = c.createConvolver(); conv.buffer = impulse(c, 2.6, 2.4);
+    AU.wet = c.createGain(); AU.wet.gain.value = 0.5; AU.wet.connect(conv); conv.connect(AU.master);
+  }
+  if (AU.ctx.state === 'suspended') AU.ctx.resume();
+  return AU.ctx;
+}
+function impulse(c, secs, decay) { const len = Math.floor(c.sampleRate * secs), b = c.createBuffer(2, len, c.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); } return b; }
+function noise(kind) {
+  if (AU.buffers[kind]) return AU.buffers[kind];
+  const c = ac(), len = c.sampleRate * 4, b = c.createBuffer(2, len, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; if (kind === 'white') d[i] = w; else if (kind === 'pink') { b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852; b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898; d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926; } else { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } } }
+  return (AU.buffers[kind] = b);
+}
+const filt = (type, f, q = 0.7) => { const n = AU.ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; return n; };
+const gn = (v) => { const n = AU.ctx.createGain(); n.gain.value = v; return n; };
+function bus(pan = 0, vol = 1, wet = 0.3) { const c = ac(), g = c.createGain(), p = c.createStereoPanner(); g.gain.value = vol; p.pan.value = clamp(pan, -1, 1); g.connect(p); p.connect(AU.master); if (wet > 0) { const s = gn(wet); p.connect(s); s.connect(AU.wet); } return g; }
+function tone(dest, t, dur, pts, peak, attack = 0.01, type = 'sine', vib = null) {
+  const c = AU.ctx, os = c.createOscillator(); os.type = type; os.frequency.setValueAtTime(pts[0][1], t);
+  for (const [dt, f] of pts.slice(1)) os.frequency.linearRampToValueAtTime(f, t + dt);
+  if (vib) { const l = c.createOscillator(), d = gn(vib[1]); l.frequency.value = vib[0]; l.connect(d); d.connect(os.frequency); l.start(t); l.stop(t + dur + 0.05); }
+  const g = c.createGain(); const a = Math.max(0.004, attack), hold = Math.max(a + 0.001, dur * 0.65);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + hold); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  os.connect(g); g.connect(dest); os.start(t); os.stop(t + dur + 0.05);
+}
+function burst(dest, t, dur, f, q, peak, kind = 'white') { const c = AU.ctx, n = c.createBufferSource(); n.buffer = noise(kind); const b = filt('bandpass', f, q), g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); n.connect(b); b.connect(g); g.connect(dest); n.start(t, Math.random() * 3, dur + 0.05); }
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+const VOICE = {
+  shishi(vol = 1) { const c = ac(), t = c.currentTime + 0.01, o = bus(-0.25, vol, 0.6);
+    for (const [dt, k] of [[0, 1], [0.22, 0.35]]) { burst(o, t + dt, 0.16, 640, 14, 3 * k); burst(o, t + dt, 0.12, 1320, 10, 2 * k); tone(o, t + dt, 0.13, [[0, 520], [0.12, 470]], 0.32 * k, 0.003); burst(o, t + dt, 0.012, 3200, 0.8, 0.3 * k); } },
+  bell(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(0.15, vol, 0.55), f0 = 72;
+    for (const [ratio, amp, dec] of [[0.5, 0.55, 38], [1, 1, 30], [2, 0.42, 20], [2.74, 0.4, 13], [3.3, 0.26, 10], [4.2, 0.22, 7], [5.4, 0.14, 5], [6.9, 0.1, 3.5]]) {
+      for (const det of [0, rnd(0.6, 1.6)]) { const os = c.createOscillator(); os.frequency.value = f0 * ratio + det; const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp * 0.085, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dec); os.connect(g); g.connect(o); os.start(t); os.stop(t + dec + 0.1); }
+    }
+    burst(o, t, 0.25, 180, 0.7, 0.8, 'brown'); },
+  uguisu(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.8, 0.8), vol * 0.6, 0.45);
+    tone(o, t, 1.05, [[0, 1180], [0.8, 1290], [1.05, 1260]], 0.16, 0.25); tone(o, t + 1.25, 0.1, [[0, 1900], [0.1, 2050]], 0.14); tone(o, t + 1.39, 0.1, [[0, 2700], [0.1, 2600]], 0.14); tone(o, t + 1.53, 0.34, [[0, 2450], [0.34, 1650]], 0.15, 0.02); },
+  sparrows(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.9, 0.9), vol * 0.5, 0.25); const n = 3 + (Math.random() * 4 | 0);
+    for (let i = 0; i < n; i++) { const up = Math.random() < 0.4; tone(o, t + i * rnd(0.1, 0.16), 0.06, up ? [[0, 3900], [0.06, 5100]] : [[0, 5300], [0.06, 4100]], 0.07, 0.004); } },
+  tonbi(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.6, 0.6), vol * 0.55, 0.6);
+    tone(o, t, 0.55, [[0, 2600], [0.4, 2950], [0.55, 2900]], 0.1, 0.05); tone(o, t + 0.65, 1.2, [[0, 2800], [1.2, 2050]], 0.08, 0.03, 'sine', [9, 120]); },
+  crows(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.9, 0.9), vol * 0.5, 0.4), n = 2 + (Math.random() * 2 | 0);
+    for (let i = 0; i < n; i++) { const st = t + i * rnd(0.45, 0.6), bp = filt('bandpass', 1150, 1.6); bp.connect(o); tone(bp, st, 0.36, [[0, 400], [0.36, 330]], 0.5, 0.02, 'sawtooth'); burst(o, st, 0.3, 1400, 1.2, 0.08); } },
+  higurashi(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.9, 0.9), vol * 0.35, 0.5), dur = 3.6;
+    const os = c.createOscillator(); os.frequency.setValueAtTime(4900, t); os.frequency.linearRampToValueAtTime(4300, t + dur);
+    const am = gn(0.5), lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.setValueAtTime(12.5, t); lfo.frequency.linearRampToValueAtTime(9, t + dur); const ld = gn(0.5); lfo.connect(ld); ld.connect(am.gain);
+    const env = c.createGain(); env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(0.12, t + 0.3); env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    os.connect(am); am.connect(env); env.connect(o); os.start(t); lfo.start(t); os.stop(t + dur + 0.1); lfo.stop(t + dur + 0.1); },
+  cricket(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-1, 1), vol * 0.22, 0.2), dur = rnd(0.4, 0.7);
+    const os = c.createOscillator(); os.frequency.value = rnd(4100, 4400); const am = gn(0.5), lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 42; const ld = gn(0.5); lfo.connect(ld); ld.connect(am.gain);
+    const env = c.createGain(); env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(0.1, t + 0.04); env.gain.setValueAtTime(0.1, t + dur - 0.06); env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    os.connect(am); am.connect(env); env.connect(o); os.start(t); lfo.start(t); os.stop(t + dur + 0.05); lfo.stop(t + dur + 0.05); },
+  kajika(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.7, 0.7), vol * 0.45, 0.5);
+    for (let i = 0; i < 4; i++) tone(o, t + i * 0.2, 0.12, [[0, 2100 + i * 90], [0.12, 2300 + i * 90]], 0.09, 0.01);
+    const os = c.createOscillator(); os.frequency.setValueAtTime(2550, t + 0.85); os.frequency.linearRampToValueAtTime(1950, t + 1.6); const am = gn(0.5), lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 26; const ld = gn(0.5); lfo.connect(ld); ld.connect(am.gain);
+    const env = c.createGain(); env.gain.setValueAtTime(0.0001, t + 0.85); env.gain.exponentialRampToValueAtTime(0.09, t + 0.9); env.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+    os.connect(am); am.connect(env); env.connect(o); os.start(t + 0.85); lfo.start(t + 0.85); os.stop(t + 1.7); lfo.stop(t + 1.7); },
+  toad(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.6, 0.6), vol * 0.7, 0.3), lp = filt('lowpass', 1500); lp.connect(o); const n = 3 + (Math.random() * 3 | 0);
+    for (let i = 0; i < n; i++) { tone(lp, t + i * 0.17, 0.07, [[0, 600], [0.07, 540]], 0.16, 0.006); tone(lp, t + i * 0.17, 0.06, [[0, 1200], [0.06, 1080]], 0.05, 0.006); } },
+  owl(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(0.2, 0.8), vol * 0.7, 0.7);
+    tone(o, t, 0.5, [[0, 410], [0.5, 390]], 0.13, 0.08); tone(o, t + 0.9, 0.22, [[0, 400], [0.22, 395]], 0.1, 0.05); tone(o, t + 1.2, 0.5, [[0, 405], [0.5, 380]], 0.12, 0.08); },
+  furin(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(rnd(-0.5, 0.5), vol * 0.6, 0.5), n = 1 + (Math.random() * 3 | 0);
+    for (let i = 0; i < n; i++) { const st = t + i * rnd(0.1, 0.18); [[2650, 0.06, 1.8], [5310, 0.03, 1], [7930, 0.02, 0.6]].forEach(([f, a, d]) => tone(o, st, d, [[0, f * rnd(0.995, 1.005)], [d, f]], a * (1 - i * 0.25), 0.003)); } },
+  taiko(vol = 1, accent = 1) { const c = ac(), t = c.currentTime + 0.01, o = bus(0.1, vol * 0.8, 0.35); tone(o, t, 0.4, [[0, 88], [0.35, 52]], 0.55 * accent, 0.004); burst(o, t, 0.04, 900, 0.8, 0.35 * accent, 'pink'); },
+  fue(vol = 1) { const c = ac(), t0 = c.currentTime + 0.02, o = bus(-0.2, vol * 0.5, 0.6), scale = [293.66, 329.63, 392, 440, 493.88, 587.33, 659.25];
+    let idx = 3 + (Math.random() * 3 | 0), t = t0; const n = 6 + (Math.random() * 4 | 0);
+    for (let i = 0; i < n; i++) { const d = rnd(0.3, 0.8), next = clamp(idx + (Math.random() < 0.5 ? -1 : 1) * (1 + (Math.random() * 2 | 0)), 0, 6); tone(o, t, d + 0.05, [[0, scale[idx] * 2], [d * 0.85, scale[idx] * 2], [d, scale[next] * 2]], 0.07, 0.04, 'sine', [5.6, 7]); burst(o, t, d, 2600, 1, 0.012, 'pink'); idx = next; t += d; } },
+  kids() { /* needs a CC0 recording */ },
+  fire(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(0, vol, 0.2); burst(o, t, 1.2, 300, 0.6, 0.18, 'brown'); for (let i = 0; i < 14; i++) burst(o, t + rnd(0, 1.2), rnd(0.008, 0.025), rnd(1800, 5000), 2, rnd(0.08, 0.25)); },
+  rainburst(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(0, vol, 0.15); burst(o, t, 2.2, 1800, 0.4, 0.12, 'pink'); for (let i = 0; i < 60; i++) burst(o, t + rnd(0, 2.2), 0.03, rnd(900, 3500), 4, rnd(0.05, 0.2)); },
+  creekburst(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(-0.1, vol, 0.15); burst(o, t, 2.4, 1700, 1.1, 0.12); burst(o, t, 2.4, 780, 1.4, 0.1); for (let i = 0; i < 16; i++) tone(o, t + rnd(0, 2.2), 0.05, [[0, rnd(420, 1300)], [0.04, rnd(700, 2200)]], 0.05, 0.005); },
+  windburst(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(0.3, vol, 0.1); const n = c.createBufferSource(); n.buffer = noise('pink'); const b = filt('bandpass', 400, 0.7); b.frequency.setValueAtTime(350, t); b.frequency.linearRampToValueAtTime(800, t + 1.5); b.frequency.linearRampToValueAtTime(420, t + 3); const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 1.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2); n.connect(b); b.connect(g); g.connect(o); n.start(t, 0, 3.4); },
+  crowdburst(vol = 1) { const c = ac(), t = c.currentTime + 0.02, o = bus(0, vol, 0.4); burst(o, t, 2.5, 650, 0.9, 0.15, 'pink'); burst(o, t, 2.5, 1500, 1.2, 0.06, 'pink'); },
+};
+
+// Continuous layers (creek, wind, rain, fire, crowd) for the director.
+function loopLayer(name) {
+  const c = ac(), out = bus(0, 0, name === 'creek' ? 0.15 : 0.1), stops = [];
+  const src = (kind) => { const s = c.createBufferSource(); s.buffer = noise(kind); s.loop = true; s.start(); stops.push(s); return s; };
+  const lfo = (hz, depth, param) => { const l = c.createOscillator(); l.frequency.value = hz; const d = gn(depth); l.connect(d); d.connect(param); l.start(); stops.push(l); };
+  if (name === 'creek') { const s = src('white'), f1 = filt('bandpass', 1700, 1.1), f2 = filt('bandpass', 780, 1.4), g1 = gn(0.22), g2 = gn(0.16); s.connect(f1); f1.connect(g1); g1.connect(out); s.connect(f2); f2.connect(g2); g2.connect(out); lfo(0.9, 380, f1.frequency); lfo(2.3, 220, f1.frequency); lfo(1.4, 160, f2.frequency); lfo(3.1, 90, f2.frequency); }
+  if (name === 'wind') { const s = src('pink'), f = filt('bandpass', 520, 0.7), g = gn(0.16); s.connect(f); f.connect(g); g.connect(out); lfo(0.06, 260, f.frequency); lfo(0.045, 0.1, g.gain); }
+  if (name === 'rain') { const s = src('pink'), f = filt('lowpass', 4200), h = filt('highpass', 300), g = gn(0.5); s.connect(h); h.connect(f); f.connect(g); g.connect(out); const b = src('brown'), bl = filt('lowpass', 220), bg = gn(0.35); b.connect(bl); bl.connect(bg); bg.connect(out); }
+  if (name === 'fire') { const s = src('brown'), f = filt('lowpass', 420), g = gn(0.3); s.connect(f); f.connect(g); g.connect(out); }
+  if (name === 'crowd') { const s = src('pink'), f = filt('bandpass', 650, 0.9), g = gn(0.16); s.connect(f); f.connect(g); g.connect(out); lfo(0.3, 0.05, g.gain); const f2 = filt('bandpass', 1500, 1.2), g2 = gn(0.05); s.connect(f2); f2.connect(g2); g2.connect(out); }
+  return { out, level: 0, stop() { stops.forEach((n) => { try { n.stop(); } catch (e) { /* already stopped */ } }); out.disconnect(); } };
+}
+function setLayer(name, level) {
+  let L = AU.loops[name];
+  if (!L && level > 0.01) L = AU.loops[name] = loopLayer(name);
+  if (!L) return;
+  L.out.gain.setTargetAtTime(level, AU.ctx.currentTime, 1.2);
+  L.level = level;
+}
+
+// The director: what should be audible right now, given time, place and weather.
+let lastDirector = 0, festivalStep = 0, lastFue = 0;
+function director(s, ms) {
+  if (!AU.on) return;
+  const h = s.hour, env = environment(h, s.weather), rain = env.rain, forest = s.zone === 'forest', night = env.dark > 0.45;
+  const nightVillage = !rain && inRange(h, 19.3, 23.6);
+  setLayer('creek', forest ? 0.32 : 0.5 + (rain ? 0.15 : 0));
+  setLayer('wind', rain ? 0.5 : inRange(h, 9, 18) ? 0.4 : 0.15);
+  setLayer('rain', rain ? 0.75 : 0);
+  setLayer('fire', nightVillage ? (forest ? 0.05 : 0.45) : 0);
+  setLayer('crowd', nightVillage && s.festival ? (forest ? 0.06 : 0.4) : 0);
+  // festival drum pattern (don . . . don . . . do-ko don . . .)
+  const pat = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0, 1, 0, 0, 0];
+  if (nightVillage && s.festival && ms - AU.festivalBeat > 290) { AU.festivalBeat = ms; const a = pat[festivalStep++ % pat.length]; if (a) VOICE.taiko(forest ? 0.12 : 0.6, a); if (ms - lastFue > 9000 && Math.random() < 0.02) { lastFue = ms; VOICE.fue(forest ? 0.15 : 0.7); } }
+  if (ms - lastDirector < 200) return;
+  lastDirector = ms;
+  const rates = { // events per minute
+    uguisu: !rain && inRange(h, 5.5, 11) ? 2.5 : !rain && inRange(h, 11, 16) ? 0.8 : 0,
+    sparrows: !rain && inRange(h, 5.5, 9.5) ? 5 : !rain && inRange(h, 9.5, 16.5) ? 1.5 : 0,
+    tonbi: !rain && inRange(h, 9, 16) ? 1 : 0,
+    crows: inRange(h, 16.5, 19) ? 3 : inRange(h, 5, 7) ? 1 : 0,
+    higurashi: !rain && inRange(h, 16.5, 19.5) ? 2.5 : !rain && inRange(h, 4.5, 6) ? 1 : 0,
+    furin: !forest && inRange(h, 8, 21) ? 1.4 : 0,
+    cricket: night ? (rain ? 12 : 45) : 0,
+    kajika: night ? (forest ? 3 : 1.5) * (rain ? 1.5 : 1) : 0,
+    toad: inRange(h, 20, 4.5) ? (forest ? 3.5 : 0.4) : 0,
+    owl: inRange(h, 22, 4.5) ? (forest ? 1.2 : 0.2) : 0,
+  };
+  for (const [name, perMin] of Object.entries(rates)) if (perMin && Math.random() < perMin / 300) VOICE[name](forest && ['furin', 'sparrows'].includes(name) ? 0.5 : 1);
+}
+
+// ====================================================================== the hero diorama
+const state = { hour: 17.6, zone: 'village', weather: 'clear', festival: true, cycle: false };
+const hero = createView(document.getElementById('scene'));
+hero.onShishi = () => { if (AU.on) VOICE.shishi(state.zone === 'forest' ? 0.15 : 0.9); };
+const timeInput = document.getElementById('time'), readout = document.getElementById('readout'), badge = document.getElementById('badge'), hudClock = document.getElementById('hudclock');
+function ringBell() { hero.bellAt = performance.now(); if (AU.on) VOICE.bell(state.zone === 'forest' ? 0.55 : 1); }
+function syncControls() {
+  timeInput.value = state.hour.toFixed(2);
+  const label = `${fmt(state.hour)} · ${phaseName(state.hour)}`;
+  readout.textContent = label; badge.textContent = label; hudClock.textContent = fmt(state.hour);
+  document.querySelectorAll('[data-zone]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.zone === state.zone)));
+  document.querySelectorAll('[data-weather]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.weather === state.weather)));
+  document.getElementById('festival').setAttribute('aria-pressed', String(state.festival));
+  document.getElementById('cycle').setAttribute('aria-pressed', String(state.cycle));
+  document.getElementById('cycle').textContent = state.cycle ? '❚❚ day cycle' : '▶ day cycle';
+}
+timeInput.addEventListener('input', () => { state.hour = Number(timeInput.value); syncControls(); });
+document.getElementById('cycle').addEventListener('click', () => { state.cycle = !state.cycle; syncControls(); });
+document.getElementById('now').addEventListener('click', () => { const d = new Date(); state.hour = d.getHours() + d.getMinutes() / 60; state.cycle = false; syncControls(); });
+document.querySelectorAll('[data-zone]').forEach((b) => b.addEventListener('click', () => { state.zone = b.dataset.zone; syncControls(); }));
+document.querySelectorAll('[data-weather]').forEach((b) => b.addEventListener('click', () => { state.weather = b.dataset.weather; syncControls(); }));
+document.getElementById('festival').addEventListener('click', () => { state.festival = !state.festival; syncControls(); });
+document.getElementById('bellbtn').addEventListener('click', ringBell);
+document.getElementById('hudbtn').addEventListener('click', (e) => { const on = document.getElementById('hud').classList.toggle('on'); e.currentTarget.setAttribute('aria-pressed', String(on)); document.getElementById('swatches').hidden = !on; });
+document.querySelectorAll('[data-hud]').forEach((b) => b.addEventListener('click', () => { document.documentElement.style.setProperty('--hud', b.dataset.hud); document.querySelectorAll('[data-hud]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }));
+const soundBtn = document.getElementById('soundbtn');
+soundBtn.addEventListener('click', () => {
+  AU.on = !AU.on; ac();
+  soundBtn.setAttribute('aria-pressed', String(AU.on)); soundBtn.textContent = AU.on ? 'sound off' : 'sound on';
+  if (!AU.on) { for (const k of Object.keys(AU.loops)) setLayer(k, 0); } else setTimeout(ringBell, 2500);
+});
+
+let last = 0, prevHour = state.hour;
+function frame(ms) {
+  requestAnimationFrame(frame);
+  if (document.hidden || ms - last < (reduced ? 250 : 33)) return;
+  const dt = Math.min(0.2, (ms - last) / 1000); last = ms;
+  if (state.cycle) { state.hour = (state.hour + dt * (24 / 180)) % 24; syncControls(); }
+  for (const b of [6, 12, 18]) { if (prevHour < b && state.hour >= b && state.hour - prevHour < 1) ringBell(); }
+  prevHour = state.hour;
+  hero.camX += (ZONE_X[state.zone] - hero.camX) * Math.min(1, dt * 1.6);
+  render(hero, state, ms);
+  director(state, ms);
+}
+syncControls();
+requestAnimationFrame(frame);
+
+// ====================================================================== the six scene cards
+const SCENES = [
+  { hour: 6.5, zone: 'village', weather: 'clear', festival: false, title: 'Morning mist', jp: '明け六つ', see: 'Mist over the paddies, the monk sweeping the temple steps, breakfast smoke from the thatched roofs', hear: 'The 6 o’clock bell, sparrows, the first uguisu, the creek' },
+  { hour: 11, zone: 'village', weather: 'clear', festival: false, title: 'Midday in the square', jp: '昼', see: 'Kids chasing each other, a kite over the rice, gusts rolling through the paddies', hear: 'The bamboo pump’s knock, a kite-hawk overhead, wind in the rice, a wind chime' },
+  { hour: 17.7, zone: 'village', weather: 'clear', festival: false, title: 'Coming home', jp: '夕暮れ', see: 'Villagers carrying baskets home from the fields, crows flying back to the hills, lanterns coming on', hear: 'Higurashi cicadas, crows, the 6 o’clock evening bell' },
+  { hour: 20.6, zone: 'village', weather: 'clear', festival: true, title: 'Festival night', jp: '夏祭り', see: 'Lantern strings, bon-odori dancers circling the yagura tower, the bonfire circle', hear: 'Taiko, a bamboo flute, the crowd, crackling fire, crickets' },
+  { hour: 23.7, zone: 'forest', weather: 'clear', festival: false, title: 'The toads come out', jp: '深夜の森', see: 'Fireflies over the creek, the toad family by the old well, an owl in the cedars', hear: 'Toads, kajika frogs, crickets, an owl, the creek' },
+  { hour: 15, zone: 'village', weather: 'rain', festival: false, title: 'Afternoon rain', jp: '雨', see: 'Soft grey light, villagers under paper umbrellas, rings on the creek, windows glowing early', hear: 'Rain on thatch, drips, frogs that love the rain' },
+];
+const scenesEl = document.getElementById('scenes');
+SCENES.forEach((sc, i) => {
+  const btn = document.createElement('button'); btn.className = 'scene'; btn.type = 'button';
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.setAttribute('aria-hidden', 'true');
+  const txt = document.createElement('div'); txt.className = 'txt';
+  txt.innerHTML = `<div class="when">${fmt(sc.hour)} · ${sc.jp}</div><h3>${sc.title}</h3><dl><dt>SEE</dt><dd>${sc.see}</dd><dt>HEAR</dt><dd>${sc.hear}</dd></dl>`;
+  btn.append(cv, txt);
+  btn.addEventListener('click', () => { Object.assign(state, { hour: sc.hour, zone: sc.zone, weather: sc.weather, festival: sc.festival, cycle: false }); hero.camX = ZONE_X[sc.zone]; syncControls(); document.getElementById('stage').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }); });
+  scenesEl.append(btn);
+  const v = createView(cv); v.camX = ZONE_X[sc.zone];
+  render(v, sc, 20000 + i * 3700);
+});
+
+// ====================================================================== how the light works (three stills)
+const how = document.getElementById('howlight');
+const howState = { hour: 21, zone: 'village', weather: 'clear', festival: true };
+[['1 · drawn as if at noon', 'flat'], ['2 · light layer: night ambient + lanterns, windows, bonfire', 'light'], ['3 · multiplied together', 'lit']].forEach(([cap, mode]) => {
+  const fig = document.createElement('figure'), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const fc = document.createElement('figcaption'); fc.textContent = cap; fig.append(cv, fc); how.append(fig);
+  const v = createView(cv); v.camX = 150;
+  if (mode === 'lit') render(v, howState, 31000);
+  else if (mode === 'flat') render(v, { ...howState, hour: 12 }, 31000);
+  else { render(v, howState, 31000); v.g.drawImage(v.light, 0, 0); }
+});
+
+// ====================================================================== sound board
+const GROUPS = [
+  ['GARDEN & WATER', [['shishi', 'Bamboo pump', '鹿威し shishi-odoshi', 'Knocks about every 9 s near the creek', 'synth'], ['bell', 'Temple bell', '梵鐘 bonshō', '6:00, 12:00, 18:00 · tap the bell house', 'synth · CC0 option'], ['creekburst', 'Creek', '小川 ogawa', 'Always, louder in rain', 'synth'], ['windburst', 'Wind in the rice', '稲風', 'Daytime gusts move the paddies', 'synth'], ['furin', 'Wind chime', '風鈴 fūrin', 'Summer days, on the gusts', 'synth']]],
+  ['BIRDS & INSECTS', [['uguisu', 'Bush warbler', '鶯 uguisu', 'Mornings: “hoo… hokekyo”', 'synth'], ['sparrows', 'Sparrows', '雀 suzume', 'Early morning on the roofs', 'synth'], ['tonbi', 'Kite-hawk', '鳶 tonbi', 'Circling at midday', 'synth'], ['crows', 'Crows', '烏 karasu', 'Dusk, flying home to the hills', 'synth'], ['higurashi', 'Evening cicada', '蜩 higurashi', 'Dusk: “kana-kana-kana”', 'synth']]],
+  ['NIGHT', [['cricket', 'Bell cricket', '鈴虫 suzumushi', 'All night', 'synth'], ['kajika', 'Kajika frog', '河鹿 kajika', 'By the creek: “fi-fi-fi”', 'synth'], ['toad', 'Toad', '蟇 hikigaeru', 'The toad family, forest at night', 'synth'], ['owl', 'Owl', '梟 fukurō', 'Late night in the cedars', 'synth'], ['fire', 'Bonfire', '焚き火 takibi', 'Village nights', 'synth']]],
+  ['FESTIVAL & WEATHER', [['taiko', 'Taiko drum', '太鼓', 'Festival nights', 'synth'], ['fue', 'Bamboo flute', '篠笛 shinobue', 'Festival nights, yo-scale phrases', 'synth'], ['crowdburst', 'Festival crowd', '人の声', 'Festival nights (a recording would be better)', 'synth'], ['rainburst', 'Rain on thatch', '雨', 'Rain', 'synth'], ['kids', 'Children playing', '子供の声', 'Daytime, very quiet', 'needs recording']]],
+];
+const voicesEl = document.getElementById('voices');
+for (const [title, list] of GROUPS) {
+  const grp = document.createElement('div'); grp.className = 'group';
+  grp.innerHTML = `<h3>${title}</h3>`;
+  const box = document.createElement('div'); box.className = 'voices';
+  for (const [key, name, jp, when, how2] of list) {
+    const row = document.createElement('div'); row.className = 'voice';
+    const rec = how2.startsWith('needs');
+    row.innerHTML = `<button class="play" type="button" aria-label="Play ${name}" ${rec ? 'disabled' : ''}>▶</button><div><b>${name}</b> <span class="jp">${jp}</span><span class="when">${when}</span></div><span class="tag ${rec ? 'rec' : 'synth'}">${how2}</span>`;
+    if (!rec) row.querySelector('button').addEventListener('click', () => { ac(); if (key === 'bell') ringBell(); else VOICE[key](1); if (key === 'bell' && !AU.on) VOICE.bell(1); });
+    box.append(row);
+  }
+  grp.append(box); voicesEl.append(grp);
+}
+})();
+</script>
