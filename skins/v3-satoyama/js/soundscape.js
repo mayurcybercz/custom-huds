@@ -89,11 +89,14 @@ export function createSoundscape(onTaiko) {
 
 // Load the optional CC0 recordings that ship with the skin (missing files are fine).
 export async function loadRecordings() {
-  const files = { kids: 'skins/v3-satoyama/audio/children.mp3', bell: 'skins/v3-satoyama/audio/bell.mp3' };
-  for (const [name, path] of Object.entries(files)) {
+  const files = {
+    kids: ['skins/v3-satoyama/audio/children.mp3', { maxSeconds: 75, offset: 40 }],
+    bell: ['skins/v3-satoyama/audio/bell.mp3', {}],
+  };
+  for (const [name, [path, opts]] of Object.entries(files)) {
     try {
       const buf = await window.hud.assets.read(path);
-      if (buf) await amb.loadSample(name, buf);
+      if (buf) await amb.loadSample(name, buf, opts);
     } catch { /* recording not installed: synthesised fallback */ }
   }
 }

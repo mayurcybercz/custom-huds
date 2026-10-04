@@ -4,3 +4,8 @@ node_modules/
 Thumbs.db
 dist/
 out/
+
+# optional CC0 recordings (npm run fetch-audio)
+skins/*/audio/*.mp3
+skins/*/audio/*.ogg
+skins/*/audio/*.wav

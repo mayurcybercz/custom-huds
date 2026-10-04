@@ -5,7 +5,8 @@
   "main": "main.js",
   "private": true,
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "fetch-audio": "node scripts/fetch-audio.js"
   },
   "devDependencies": {
     "electron": "^44.5.1"

@@ -511,10 +511,25 @@ export function layer(name, level) {
 // ---- recorded samples (CC0 files shipped with a skin), decoded once, looped or played
 const samples = {};
 const sampleLoops = {};
-export async function loadSample(name, arrayBuffer) {
+// opts.maxSeconds keeps only an excerpt (starting at opts.offset seconds), mixed down to mono,
+// so a long field recording doesn't sit in memory at full length.
+export async function loadSample(name, arrayBuffer, opts = {}) {
   const c = audio();
-  samples[name] = await c.decodeAudioData(arrayBuffer);
-  return samples[name];
+  let buf = await c.decodeAudioData(arrayBuffer);
+  if (opts.maxSeconds && buf.duration > opts.maxSeconds) {
+    const rate = buf.sampleRate, start = Math.min(Math.floor((opts.offset || 0) * rate), buf.length - 1);
+    const len = Math.min(Math.floor(opts.maxSeconds * rate), buf.length - start);
+    const out = c.createBuffer(1, len, rate), d = out.getChannelData(0);
+    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+      const src = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] += src[start + i] / buf.numberOfChannels;
+    }
+    const fade = Math.min(len >> 2, Math.floor(rate * 1.5)); // soften the loop seam
+    for (let i = 0; i < fade; i++) { const k = i / fade; d[i] *= k; d[len - 1 - i] *= k; }
+    buf = out;
+  }
+  samples[name] = buf;
+  return buf;
 }
 export function hasSample(name) { return Boolean(samples[name]); }
 export function sampleLoop(name, level) {
