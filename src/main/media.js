@@ -7,7 +7,7 @@ const fs = require('fs');
 const readline = require('readline');
 
 const script = path.join(__dirname, 'scripts', 'media.ps1');
-const cmdFile = path.join(app.getPath('temp'), 'nexus-media-cmd.txt');
+const cmdFile = path.join(app.getPath('temp'), 'custom-huds-media-cmd.txt');
 
 let proc = null;
 let target = null;

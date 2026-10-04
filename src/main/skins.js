@@ -18,7 +18,7 @@ function list() {
 }
 
 function current() {
-  const wanted = process.env.NEXUS_SKIN || (store.get('settings') || {}).skin || DEFAULT_SKIN;
+  const wanted = process.env.HUD_SKIN || (store.get('settings') || {}).skin || DEFAULT_SKIN;
   const all = list();
   return (all.find((s) => s.id === wanted) || all.find((s) => s.id === DEFAULT_SKIN) || all[0]).id;
 }

@@ -7,6 +7,7 @@ const terminal = require('./src/main/terminal');
 const media = require('./src/main/media');
 const research = require('./src/main/research');
 const skins = require('./src/main/skins');
+const images = require('./src/main/images');
 
 const TOGGLE_HOTKEY = 'Control+Alt+Space';
 
@@ -17,6 +18,13 @@ let tray = null;
 const loginItem = () => ({ path: process.execPath, args: app.isPackaged ? [] : [app.getAppPath()] });
 const getStartup = () => app.getLoginItemSettings(loginItem()).openAtLogin;
 const setStartup = (on) => app.setLoginItemSettings({ ...loginItem(), openAtLogin: on });
+
+// Windows needs an AppUserModelID for toast notifications (pomodoro, water, schedule).
+// In dev the electron.exe path works as the ID.
+if (process.platform === 'win32') app.setAppUserModelId(app.isPackaged ? 'com.mayurcybercz.customhuds' : process.execPath);
+
+// Screenshot test runs: keep painting even when other windows cover the HUD.
+if (process.env.HUD_SNAPSHOT) app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -32,12 +40,13 @@ function createWindow() {
     resizable: true,
     show: false,
     backgroundColor: '#03070a',
-    title: 'NEXUS//HUD',
+    title: 'Custom HUDs',
     icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       sandbox: true,
+      backgroundThrottling: !process.env.HUD_SNAPSHOT,
     },
   });
   win.loadFile(skins.entry(skins.current()));
@@ -46,16 +55,17 @@ function createWindow() {
     win.maximize();
   });
 
-  // Dev aid: NEXUS_SNAPSHOT=path.png saves a screenshot a few seconds after launch.
-  if (process.env.NEXUS_SNAPSHOT) {
+  // Dev aid: HUD_SNAPSHOT=path.png saves a screenshot a few seconds after launch
+  // (HUD_SNAPSHOT_JS runs first in the page, HUD_SNAPSHOT_DELAY sets the wait in ms).
+  if (process.env.HUD_SNAPSHOT) {
     win.webContents.on('console-message', (_e, level, message) => level >= 2 && console.log('[renderer]', message));
     setTimeout(async () => {
-      if (process.env.NEXUS_SNAPSHOT_JS) await win.webContents.executeJavaScript(process.env.NEXUS_SNAPSHOT_JS);
+      if (process.env.HUD_SNAPSHOT_JS) await win.webContents.executeJavaScript(process.env.HUD_SNAPSHOT_JS);
       await new Promise((r) => setTimeout(r, 1200));
       const img = await win.webContents.capturePage();
-      require('fs').writeFileSync(process.env.NEXUS_SNAPSHOT, img.toPNG());
+      require('fs').writeFileSync(process.env.HUD_SNAPSHOT, img.toPNG());
       console.log('snapshot saved');
-    }, Number(process.env.NEXUS_SNAPSHOT_DELAY || 9000));
+    }, Number(process.env.HUD_SNAPSHOT_DELAY || 9000));
   }
 
   // Open links in the user's real browser instead of inside the HUD.
@@ -102,12 +112,13 @@ function toggleWindow() {
 function buildTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icon.png')).resize({ width: 16, height: 16 });
   tray = new Tray(icon);
-  tray.setToolTip(`NEXUS//HUD  (${TOGGLE_HOTKEY.replace(/\+/g, ' + ')})`);
   buildTrayMenu();
   tray.on('click', toggleWindow);
 }
 
 function buildTrayMenu() {
+  const skin = skins.list().find((s) => s.id === skins.current());
+  tray.setToolTip(`Custom HUDs · ${skin ? skin.name : ''}  (${TOGGLE_HOTKEY.replace(/\+/g, ' + ')})`);
   const refreshMenu = () => {
     const startup = getStartup();
     tray.setContextMenu(Menu.buildFromTemplate([
@@ -151,6 +162,22 @@ function registerIpc() {
 
   ipcMain.handle('skins:list', () => ({ skins: skins.list(), current: skins.current() }));
   ipcMain.handle('skins:set', (_e, id) => switchSkin(id));
+
+  ipcMain.handle('images:fetch', (_e, sources) => images.fetchImages(Array.isArray(sources) ? sources : []));
+
+  // Launcher: open a URL in the browser, or a file / folder / app shortcut with its default handler.
+  ipcMain.handle('launch:open', async (_e, target) => {
+    if (typeof target !== 'string' || !target.trim()) return 'empty target';
+    if (/^https?:\/\//i.test(target)) { await shell.openExternal(target); return ''; }
+    return shell.openPath(target.trim()); // '' on success, error text otherwise
+  });
+  ipcMain.handle('launch:icon', async (_e, target) => {
+    try {
+      return (await app.getFileIcon(target, { size: 'large' })).toDataURL();
+    } catch {
+      return null;
+    }
+  });
 
   ipcMain.handle('feeds:tech', () => feeds.techNews());
   ipcMain.handle('feeds:anime', () => feeds.animeNews());

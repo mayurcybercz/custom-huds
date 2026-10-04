@@ -39,9 +39,9 @@ const MODELS = [
 ];
 
 export async function openSettings() {
-  const s = await window.nexus.settings.get();
-  const startup = await window.nexus.settings.startup();
-  const skinInfo = await window.nexus.skins.list();
+  const s = await window.hud.settings.get();
+  const startup = await window.hud.settings.startup();
+  const skinInfo = await window.hud.skins.list();
   const skin = h('select', {}, ...skinInfo.skins.map((sk) =>
     h('option', { value: sk.id, selected: sk.id === skinInfo.current }, `${sk.name}${sk.version ? ` v${sk.version}` : ''}: ${sk.description}`)));
   const keyInput = h('input', { class: 'input', type: 'password', placeholder: s.hasKey ? '•••••••• (saved, type to replace)' : 'sk-ant-…', spellcheck: 'false' });
@@ -71,13 +71,13 @@ export async function openSettings() {
   syncEngine();
 
   async function saveAll() {
-    if (keyInput.value.trim()) await window.nexus.settings.setApiKey(keyInput.value.trim());
-    await window.nexus.settings.setModel(model.value);
-    await window.nexus.settings.setEngine({ provider: engine.value, ollamaModel: s.ollamaOnline ? localModel.value : undefined });
-    await window.nexus.settings.startup(startupBox.checked);
+    if (keyInput.value.trim()) await window.hud.settings.setApiKey(keyInput.value.trim());
+    await window.hud.settings.setModel(model.value);
+    await window.hud.settings.setEngine({ provider: engine.value, ollamaModel: s.ollamaOnline ? localModel.value : undefined });
+    await window.hud.settings.startup(startupBox.checked);
     closeModal();
     document.dispatchEvent(new CustomEvent('settings:changed'));
-    if (skin.value !== skinInfo.current) window.nexus.skins.set(skin.value); // reloads into the new skin
+    if (skin.value !== skinInfo.current) window.hud.skins.set(skin.value); // reloads into the new skin
   }
 
   openModal(h('div', { class: 'dialog' },
@@ -86,10 +86,10 @@ export async function openSettings() {
     h('div', {}, h('div', { class: 'label' }, 'Research engine'), h('div', { class: 'rowx' }, engine)),
     localBox,
     claudeBox,
-    h('label', { class: 'rowx' }, startupBox, 'Start NEXUS with Windows'),
+    h('label', { class: 'rowx' }, startupBox, 'Start Custom HUDs with Windows'),
     h('div', { class: 'note' }, 'Ctrl + Alt + Space toggles the HUD from anywhere. Closing hides it to the tray.'),
     h('div', { class: 'foot' },
-      s.keySource === 'saved' ? h('button', { class: 'btn', onclick: async () => { await window.nexus.settings.setApiKey(''); closeModal(); } }, 'FORGET KEY') : null,
+      s.keySource === 'saved' ? h('button', { class: 'btn', onclick: async () => { await window.hud.settings.setApiKey(''); closeModal(); } }, 'FORGET KEY') : null,
       h('button', { class: 'btn', onclick: closeModal }, 'CANCEL'),
       h('button', { class: 'btn', onclick: saveAll }, 'SAVE'))));
 }

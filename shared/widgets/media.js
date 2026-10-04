@@ -12,23 +12,23 @@ export function mount({ body: root, meta }) {
   const viz = h('div', { class: 'm-viz' }, ...Array.from({ length: 40 }, () => h('i')));
   const fill = h('i');
   const tNow = h('span'), tEnd = h('span');
-  const playBtn = h('button', { class: 'btn play', title: 'Play / pause', onclick: () => window.nexus.media.cmd('play') }, '▶');
+  const playBtn = h('button', { class: 'btn play', title: 'Play / pause', onclick: () => window.hud.media.cmd('play') }, '▶');
   root.append(art, h('div', { class: 'm-info' },
     title, artist, viz,
     h('div', { class: 'bar' }, fill),
     h('div', { class: 'm-time' }, tNow, tEnd),
     h('div', { class: 'm-ctrl' },
-      h('button', { class: 'btn', title: 'Previous', onclick: () => window.nexus.media.cmd('prev') }, '⏮'),
+      h('button', { class: 'btn', title: 'Previous', onclick: () => window.hud.media.cmd('prev') }, '⏮'),
       playBtn,
-      h('button', { class: 'btn', title: 'Next', onclick: () => window.nexus.media.cmd('next') }, '⏭'),
+      h('button', { class: 'btn', title: 'Next', onclick: () => window.hud.media.cmd('next') }, '⏭'),
       h('span', { class: 'spacer' }),
-      h('button', { class: 'btn launch', title: 'Open Spotify', onclick: () => window.nexus.openExternal('https://open.spotify.com') }, 'SPOTIFY ↗'),
-      h('button', { class: 'btn launch', title: 'Open Crunchyroll', onclick: () => window.nexus.openExternal('https://www.crunchyroll.com') }, 'CRUNCHYROLL ↗'))));
+      h('button', { class: 'btn launch', title: 'Open Spotify', onclick: () => window.hud.openExternal('https://open.spotify.com') }, 'SPOTIFY ↗'),
+      h('button', { class: 'btn launch', title: 'Open Crunchyroll', onclick: () => window.hud.openExternal('https://www.crunchyroll.com') }, 'CRUNCHYROLL ↗'))));
 
   let state = { active: false };
   let shownThumb = null;
 
-  window.nexus.media.onState((s) => {
+  window.hud.media.onState((s) => {
     state = s;
     if (!s.active) {
       title.textContent = 'NO SIGNAL';
@@ -70,5 +70,5 @@ export function mount({ body: root, meta }) {
     }
   }, 120);
 
-  window.nexus.media.start();
+  window.hud.media.start();
 }

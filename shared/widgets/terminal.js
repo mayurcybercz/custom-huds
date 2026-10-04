@@ -29,26 +29,26 @@ export async function mount({ body: host }) {
   await document.fonts.ready;
   fit.fit();
 
-  term.onData((d) => window.nexus.term.input(d));
-  window.nexus.term.onData((d) => term.write(d));
-  window.nexus.term.onExit(() => {
+  term.onData((d) => window.hud.term.input(d));
+  window.hud.term.onData((d) => term.write(d));
+  window.hud.term.onExit(() => {
     term.write('\r\n\x1b[33m[shell exited, press any key to restart]\x1b[0m\r\n');
-    const sub = term.onKey(() => { sub.dispose(); term.clear(); window.nexus.term.start(term.cols, term.rows); });
+    const sub = term.onKey(() => { sub.dispose(); term.clear(); window.hud.term.start(term.cols, term.rows); });
   });
   // Ctrl+Shift+C / Ctrl+Shift+V for copy/paste; plain Ctrl+C stays an interrupt.
   term.attachCustomKeyEventHandler((e) => {
     if (e.type !== 'keydown' || !e.ctrlKey || !e.shiftKey) return true;
     if (e.code === 'KeyC') { navigator.clipboard.writeText(term.getSelection()); return false; }
-    if (e.code === 'KeyV') { navigator.clipboard.readText().then((t) => window.nexus.term.input(t)); return false; }
+    if (e.code === 'KeyV') { navigator.clipboard.readText().then((t) => window.hud.term.input(t)); return false; }
     return true;
   });
 
-  const { reused } = await window.nexus.term.start(term.cols, term.rows);
-  if (reused) window.nexus.term.input('\r');
+  const { reused } = await window.hud.term.start(term.cols, term.rows);
+  if (reused) window.hud.term.input('\r');
   new ResizeObserver(() => {
     if (!host.clientWidth) return;
     fit.fit();
-    window.nexus.term.resize(term.cols, term.rows);
+    window.hud.term.resize(term.cols, term.rows);
   }).observe(host);
   return term;
 }

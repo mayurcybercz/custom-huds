@@ -2,7 +2,7 @@ const Parser = require('rss-parser');
 
 const parser = new Parser({
   timeout: 15000,
-  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NexusHUD/0.1' },
+  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) CustomHUDs/2.0' },
   customFields: { item: [['media:thumbnail', 'mediaThumb'], ['media:content', 'mediaContent']] },
 });
 

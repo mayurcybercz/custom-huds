@@ -1,7 +1,7 @@
 // Keyless web search for the local research pipeline.
 // Search engines serve captchas to plain HTTP clients, so results are read from a hidden
 // Chromium window (DuckDuckGo, then Bing), topped up with Wikipedia's official API.
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, app } = require('electron');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 const STOPWORDS = new Set('a an and are as at be by for from how in is it of on or that the this to was what when where which who why will with vs'.split(' '));
@@ -22,9 +22,11 @@ function browser() {
   if (!searchWin || searchWin.isDestroyed()) {
     searchWin = new BrowserWindow({
       show: false,
-      webPreferences: { partition: 'persist:nexus-search', sandbox: true, contextIsolation: true },
+      webPreferences: { partition: 'persist:hud-search', sandbox: true, contextIsolation: true },
     });
-    searchWin.webContents.setUserAgent(searchWin.webContents.getUserAgent().replace(/ Electron\/\S+| nexus-hud\/\S+/g, ''));
+    // Look like plain Chrome: drop the "Electron/x" and "<app>/<version>" tokens from the UA.
+    searchWin.webContents.setUserAgent(searchWin.webContents.getUserAgent()
+      .replace(/ Electron\/\S+/, '').replace(` ${app.getName()}/${app.getVersion()}`, ''));
     searchWin.webContents.setAudioMuted(true);
     searchWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   }
@@ -84,7 +86,7 @@ function browserSearch(query, signal) {
 async function wikipedia(query, signal) {
   const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=2&srsearch=${encodeURIComponent(query)}`;
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'NexusHUD/0.1 (personal desktop app)' }, signal });
+    const res = await fetch(url, { headers: { 'User-Agent': 'CustomHUDs/2.0 (personal desktop app)' }, signal });
     const json = await res.json();
     return json.query.search.map((s) => ({
       url: `https://en.wikipedia.org/wiki/${encodeURIComponent(s.title.replace(/ /g, '_'))}`,

@@ -1,6 +1,6 @@
-# NEXUS//HUD
+# Custom HUDs
 
-A full-desktop HUD for Windows 11, built with Electron. It has interchangeable **skins** that run on one shared engine and a shared library of reusable **widgets** (gadgets).
+Skinnable, full-desktop HUDs for Windows 11, built with Electron. Every **skin** is a complete look and layout running on one shared engine, with a shared library of reusable **widgets** (gadgets). Your data (tasks, pet, research history…) is shared by all skins, so switching skins never loses anything.
 
 📖 **[Usage guide](docs/USAGE.md)**: install, controls, every widget, and troubleshooting.
 
@@ -8,26 +8,33 @@ A full-desktop HUD for Windows 11, built with Electron. It has interchangeable *
 
 | Skin | Version | Status | Look | Widgets |
 |------|---------|--------|------|---------|
-| [`v1-nexus`](skins/v1-nexus) | 1.0.0 | ✅ stable | Hacker / Iron-Man HUD: cyan on black, hex grid, scanlines, arc-reactor clock, boot sequence | clock\*, sys, pet, research, terminal, todo, projects, media, tech, anime |
-| `v2-lofi` | 2.0.0 | 🚧 planned | Anime / lo-fi: soft pastels, night-city wallpaper, rounded cozy widgets | v1 widgets plus schedule, meals, water, image feed, pomodoro, launcher, notes |
+| [`v1-nexus`](skins/v1-nexus) · **NEXUS** | 1.0.0 | ✅ stable | Hacker / Iron-Man HUD: cyan on black, hex grid, scanlines, arc-reactor clock, boot sequence | clock\*, sys, pet, research, terminal, todo, projects, media, tech, anime |
+| [`v2-lofi`](skins/v2-lofi) · **LO-FI** | 2.0.0 | ✅ stable | Cozy anime / lo-fi: frosted glass cards over a city that follows the real time of day (dawn → day → dusk → night), sakura petals or rain, daily rings | hero\*, schedule, pomodoro, water, meals, images, launcher, notes, todo + projects (tabbed), research, media, anime, pet, terminal (drop-down) |
 
 \* = skin-specific widget; all others come from the shared library.
 
-To switch skins, use **tray icon → Skin**, or ⚙ → *Skin* inside the HUD. To launch straight into one skin, set `NEXUS_SKIN=v1-nexus` before running `npm start`.
+To switch skins, use **tray icon → Skin**, or ⚙ → *Skin*. To launch straight into one skin, set `HUD_SKIN=v2-lofi` before running `npm start`.
 
 ## Shared widgets
 
-| Widget | What it does |
-|--------|--------------|
-| `sys` | CPU sparkline and per-thread bars, RAM, disk, uptime |
-| `pet` | Tamagotchi companion. Stats decay in real time (even while the app is closed); finishing tasks and projects gives XP. Sprite colors come from the skin |
-| `research` | Research agent with streamed, tiled briefings and history. Local engine: Ollama + web search (free). Cloud engine: Claude + web search (API key) |
-| `terminal` | Real PowerShell (node-pty + xterm.js) |
-| `todo` | Tasks with priorities (`!` high, `!!` critical) |
-| `projects` | Projects with progress, status, notes and link |
-| `media` | Now playing for any Windows media session (Spotify, browser tabs…) with controls and album art |
-| `tech` | AI / tech news (HN, The Verge, TechCrunch, Ars, MIT TR) |
-| `anime` | Airing schedule from AniList with Crunchyroll links, plus anime news |
+| Widget | Since | What it does |
+|--------|-------|--------------|
+| `todo` | v1 | Tasks with priorities (`!` high, `!!` critical) |
+| `projects` | v1 | Projects with progress, status, notes and link |
+| `research` | v1 | Research agent with streamed, tiled briefings and history. Local engine: Ollama + web search (free). Cloud engine: Claude + web search (API key) |
+| `terminal` | v1 | Real PowerShell (node-pty + xterm.js) |
+| `pet` | v1 | Tamagotchi companion. Stats decay in real time; tasks, focus sessions, water and meals keep it happy and give XP |
+| `media` | v1 | Now playing for any Windows media session (Spotify, browser tabs…) with controls and album art |
+| `sys` | v1 | CPU sparkline and per-thread bars, RAM, disk, uptime |
+| `tech` | v1 | AI / tech news (HN, The Verge, TechCrunch, Ars, MIT TR) |
+| `anime` | v1 | Airing schedule from AniList with Crunchyroll links, plus anime news |
+| `schedule` | v2 | Daily timetable with blocks that repeat daily, on weekdays, weekends or once. Shows now / next, lets you tick blocks off, reminds you 5 min before each |
+| `pomodoro` | v2 | Focus timer (25/5/15) linked to a task. Survives reloads; counts sessions per day |
+| `water` | v2 | Tap-to-log water with an animated glass, 7-day history, and gentle reminders when you're behind pace |
+| `meals` | v2 | Meal log per day (type `oats 350` and the trailing number is kcal), recent-meal chips, kcal goal |
+| `images` | v2 | Auto-scrolling image wall from Pinterest boards (RSS) and Wallhaven searches (SFW only) |
+| `launcher` | v2 | Tiles for apps, folders, files and sites. Drag & drop to add; Alt+1…9 to launch |
+| `notes` | v2 | Tabbed scratchpad with autosave and markdown preview |
 
 ## Run
 
@@ -38,7 +45,7 @@ npm install
 npm start
 ```
 
-You can also double-click **`Start NEXUS.vbs`** (no console window).
+You can also double-click **`Start Custom HUDs.vbs`** (no console window).
 
 - **Ctrl + Alt + Space** shows or hides the HUD. Closing the window hides it to the tray.
 - Double-click a panel header (or press ⤢) to maximize it; Esc restores it.
@@ -52,23 +59,32 @@ You can also double-click **`Start NEXUS.vbs`** (no console window).
 ## Project layout
 
 ```
-main.js, preload.js        Electron main process + the safe window.nexus bridge
-src/main/                  Engine: store, skins, feeds, sysinfo, terminal (pty), media poller, research (Claude/Ollama), websearch
-shared/core/               Renderer core: util (DOM helpers, event bus, cssVar), modal/settings, hud (skin bootstrap)
-shared/widgets/            Reusable widgets, each exporting mount({ panel, body, meta, slot })
-shared/styles/widgets.css  Widget styles, themed through CSS variables
+main.js, preload.js        Electron main process + the safe window.hud bridge
+src/main/                  Engine: store, skins, feeds, images, sysinfo, terminal (pty), media poller, research (Claude/Ollama), websearch
+shared/core/               Renderer core: util (DOM helpers, event bus, cssVar, notify), modal/settings, hud (skin bootstrap, tabbed cards)
+shared/widgets/            Reusable widgets, each exporting mount({ panel, body, meta, slot, opts })
+shared/styles/             widgets.css (v1 widgets) + gadgets.css (v2 gadgets), themed through CSS variables
 skins/<id>/                A skin: skin.json, index.html (layout), styles.css (palette + chrome), js/app.js (+ skin-only widgets)
 ```
 
 ### Making a skin
 
 1. Copy a skin folder to `skins/vN-name/` and edit `skin.json`.
-2. In `index.html`, place panels with `data-widget="todo"` etc. Each needs a `[data-body]` element and optionally `data-slot="meta|refresh|history|tabs"` and `data-max`.
-3. In `styles.css`, set the palette variables on `:root`: `--accent --accent2 --accent3 --ok --warn --danger --text --strong --dim --faint --line --panel --glow --mono --display`, plus optional `--pet-*` and `--term-*`.
+2. In `index.html`, place panels with `data-widget="todo"` etc. Each needs a `[data-body]` element and optionally `data-slot="meta|refresh|history|tabs|config"` and `data-max`.
+   - Wording can be overridden per skin with `data-opts`, e.g. `data-opts='{"text":{"run":"search"}}'` on the research panel.
+   - To put several widgets in one card as tabs, use a `data-tabcard` section with `data-tab` buttons and one `[data-widget]` pane per tab.
+3. In `styles.css`, set the palette variables on `:root`: `--accent --accent2 --accent3 --ok --warn --danger --text --strong --dim --faint --line --panel --glow --mono --display --radius`, plus optional `--pet-*` (companion sprite) and `--term-*` (terminal).
 4. In `js/app.js`, call `bootHud({ ...widgets, myCustomWidget })`.
 
-All data lives in `%APPDATA%\nexus-hud\nexus-data.json` and is shared by every skin.
+Widgets talk through a small event bus (`todo:done`, `pomo:done`, `water:goal`, `meal:add`, `schedule:done`, `tech:headlines`, `sys:stats`…), so skins can react to anything (tickers, rings, pet rewards).
+
+All data lives in `%APPDATA%\custom-huds\data.json` and is shared by every skin.
 
 ## Changelog
 
+- **v2.0.0**
+  - Renamed the project to **Custom HUDs**; NEXUS is now the name of the v1 skin. Existing data migrates automatically from `%APPDATA%\nexus-hud`.
+  - New **LO-FI** skin.
+  - Seven new shared gadgets: schedule, pomodoro, water, meals, image wall, launcher and notes.
+  - Engine additions: tabbed cards, per-skin wording (`data-opts`), a drop-down terminal, desktop notifications, and pet rewards for healthy habits.
 - **v1.0.0**: First release. NEXUS hacker skin with 10 widgets, local and cloud research, and an engine restructured so every skin shares its widgets.

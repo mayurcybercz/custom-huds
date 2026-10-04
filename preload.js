@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 // Subscribe to a main-process channel; returns an unsubscribe function.
 function on(channel, fn) {
@@ -7,7 +7,7 @@ function on(channel, fn) {
   return () => ipcRenderer.removeListener(channel, handler);
 }
 
-contextBridge.exposeInMainWorld('nexus', {
+contextBridge.exposeInMainWorld('hud', {
   store: {
     get: (key) => ipcRenderer.invoke('store:get', key),
     set: (key, value) => ipcRenderer.invoke('store:set', key, value),
@@ -54,4 +54,13 @@ contextBridge.exposeInMainWorld('nexus', {
     quit: () => ipcRenderer.send('win:quit'),
   },
   openExternal: (url) => ipcRenderer.send('open:external', url),
+  images: {
+    fetch: (sources) => ipcRenderer.invoke('images:fetch', sources),
+  },
+  launch: {
+    open: (target) => ipcRenderer.invoke('launch:open', target),
+    icon: (target) => ipcRenderer.invoke('launch:icon', target),
+  },
+  // Absolute path of a file dropped onto the page (File.path no longer exists in Electron).
+  pathForFile: (file) => webUtils.getPathForFile(file),
 });

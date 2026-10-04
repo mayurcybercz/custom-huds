@@ -6,7 +6,7 @@ const REFRESH_MS = 15 * 60 * 1000;
 
 function newsList(items) {
   return h('div', { class: 'feed' }, ...items.map((it) =>
-    h('div', { class: 'feed-item', title: it.title, style: { '--c': SRC_COLORS[it.source] || 'var(--accent)' }, onclick: () => window.nexus.openExternal(it.link) },
+    h('div', { class: 'feed-item', title: it.title, style: { '--c': SRC_COLORS[it.source] || 'var(--accent)' }, onclick: () => window.hud.openExternal(it.link) },
       h('span', { class: 'src' }, it.source),
       h('span', { class: 't' }, it.title),
       h('span', { class: 'ago' }, timeAgo(it.date)))));
@@ -22,7 +22,7 @@ export function tech({ body: root, meta: metaSlot, slot }) {
   async function refresh() {
     meta.innerHTML = '<span class="spinner"></span>';
     try {
-      const { items, failed } = await window.nexus.feeds.tech();
+      const { items, failed } = await window.hud.feeds.tech();
       root.replaceChildren(newsList(items), failNote(failed));
       meta.textContent = `${items.length} items · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
       emit('tech:headlines', items);
@@ -53,9 +53,9 @@ export function anime({ body: root, slot }) {
         : new Date(a.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       return h('div', { class: 'air-item', style: { '--c': a.color || 'var(--line)' } },
         h('img', { src: a.cover, alt: '', loading: 'lazy' }),
-        h('div', { class: 't', title: a.title, onclick: () => window.nexus.openExternal(a.url) }, a.title, h('small', {}, `EPISODE ${a.episode}`)),
+        h('div', { class: 't', title: a.title, onclick: () => window.hud.openExternal(a.url) }, a.title, h('small', {}, `EPISODE ${a.episode}`)),
         h('div', { class: `when${live ? ' live' : ''}` }, when,
-          a.crunchyroll ? h('div', {}, h('span', { class: 'badge cr', title: 'Watch on Crunchyroll', onclick: () => window.nexus.openExternal(a.crunchyroll) }, 'CR ▶')) : null));
+          a.crunchyroll ? h('div', {}, h('span', { class: 'badge cr', title: 'Watch on Crunchyroll', onclick: () => window.hud.openExternal(a.crunchyroll) }, 'CR ▶')) : null));
     }));
   }
 
@@ -63,9 +63,9 @@ export function anime({ body: root, slot }) {
     root.replaceChildren(h('div', { class: 'empty' }, h('span', { class: 'spinner' }), ' syncing…'));
     try {
       if (tab === 'airing') {
-        root.replaceChildren(airingList(await window.nexus.feeds.airing()));
+        root.replaceChildren(airingList(await window.hud.feeds.airing()));
       } else {
-        const { items, failed } = await window.nexus.feeds.anime();
+        const { items, failed } = await window.hud.feeds.anime();
         root.replaceChildren(newsList(items), failNote(failed));
       }
     } catch (e) {

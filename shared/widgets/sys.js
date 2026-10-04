@@ -39,7 +39,7 @@ export function mount({ body: root, meta }) {
 
   let host = false;
   async function tick() {
-    const s = await window.nexus.sys.stats();
+    const s = await window.hud.sys.stats();
     if (!host) {
       if (meta) meta.textContent = `${s.user}@${s.host}`;
       host = true;

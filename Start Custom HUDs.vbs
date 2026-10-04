@@ -1,4 +1,4 @@
-' Double-click to launch NEXUS//HUD without a console window.
+' Double-click to launch Custom HUDs without a console window.
 Set fso = CreateObject("Scripting.FileSystemObject")
 dir = fso.GetParentFolderName(WScript.ScriptFullName)
 Set sh = CreateObject("WScript.Shell")

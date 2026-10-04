@@ -56,10 +56,10 @@ export const listen = (name, fn) => bus.addEventListener(name, (e) => fn(e.detai
 
 // Load a persisted value, falling back to a default.
 export async function load(key, fallback) {
-  const v = await window.nexus.store.get(key);
+  const v = await window.hud.store.get(key);
   return v === undefined || v === null ? fallback : v;
 }
-export const save = (key, value) => window.nexus.store.set(key, value);
+export const save = (key, value) => window.hud.store.set(key, value);
 
 export function sanitizeMarkdown(md) {
   const html = window.marked.parse(md, { gfm: true, breaks: false });
@@ -70,4 +70,35 @@ export function sanitizeMarkdown(md) {
 export function cssVar(name, fallback = '') {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return v || fallback;
+}
+
+// Local calendar day as YYYY-MM-DD (used to bucket daily trackers).
+export function dayKey(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export const pad2 = (n) => String(n).padStart(2, '0');
+
+// "HH:MM" <-> minutes since midnight.
+export const toMin = (hhmm) => { const [hh, mm] = String(hhmm).split(':').map(Number); return hh * 60 + (mm || 0); };
+export const fromMin = (m) => `${pad2(Math.floor(m / 60) % 24)}:${pad2(m % 60)}`;
+
+// Desktop notification + a soft two-note chime (no audio files needed).
+export function notify(title, body, { sound = true } = {}) {
+  try { new Notification(title, { body, silent: true }); } catch { /* notifications disabled */ }
+  if (!sound) return;
+  try {
+    const ac = new AudioContext();
+    [[659.25, 0], [880, 0.18]].forEach(([f, t]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.18, ac.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.9);
+      o.connect(g).connect(ac.destination);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 1);
+    });
+    setTimeout(() => ac.close(), 1500);
+  } catch { /* no audio device */ }
 }

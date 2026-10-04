@@ -8,9 +8,9 @@ const PRI = [
 ];
 const priIndex = (k) => Math.max(0, PRI.findIndex((p) => p.key === k));
 
-export async function mount({ body: root, meta }) {
+export async function mount({ body: root, meta, opts = {} }) {
   let todos = await load('todos', []);
-  const input = h('input', { class: 'input', placeholder: '> new task… (enter)  ·  prefix ! for high priority' });
+  const input = h('input', { class: 'input', placeholder: opts.placeholder || '> new task… (enter)  ·  prefix ! for high priority' });
   const list = h('div', { class: 'list' });
   root.append(input, list);
 

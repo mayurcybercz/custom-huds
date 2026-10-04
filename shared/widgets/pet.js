@@ -171,6 +171,19 @@ export async function mount({ body: root, meta }) {
     }
     persist(); renderStats();
   });
+  // Healthy-habit gadgets also feed the companion.
+  const reward = (happy, xp, line) => {
+    simulate(p);
+    p.happy = clamp(p.happy + happy); p.xp += xp;
+    if (stage(p) !== 'egg' && !p.sleeping) { burst('heart', 4); say(line); }
+    persist(); renderStats();
+  };
+  listen('pomo:done', ({ minutes }) => reward(10, 15, `${minutes} focused minutes. so proud of you!`));
+  listen('water:add', () => { simulate(p); p.clean = clamp(p.clean + 2); persist(); renderStats(); });
+  listen('water:goal', () => reward(15, 20, 'hydration goal reached 💧'));
+  listen('schedule:done', (b) => reward(5, 8, `"${b.title.slice(0, 18)}" done ✓`));
+  listen('meal:add', () => { simulate(p); p.hunger = clamp(p.hunger + 10); persist(); renderStats(); say(pick(['yum, share?', 'smells good…', 'eating together :)'])); });
+
   listen('project:done', (proj) => {
     simulate(p);
     p.happy = clamp(p.happy + 30); p.xp += 60;

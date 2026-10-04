@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'">
+  <title>Custom HUDs · lo-fi</title>
+  <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css">
+  <link rel="stylesheet" href="../../shared/styles/widgets.css">
+  <link rel="stylesheet" href="../../shared/styles/gadgets.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div class="grain"></div>
+
+  <header id="hero" data-widget="hero">
+    <div class="hero-main" data-body></div>
+    <div class="hero-ctrl">
+      <button id="btn-scene" title="Weather: petals / rain / clear">✿</button>
+      <button id="btn-term" title="Terminal (Ctrl + `)">⌨</button>
+      <button data-action="settings" title="Settings / skins">⚙</button>
+      <button data-action="minimize" title="Minimize (Ctrl+Alt+Space toggles)">—</button>
+      <button data-action="quit" class="danger" title="Quit">⏻</button>
+    </div>
+  </header>
+
+  <main id="board">
+    <!-- column A: day plan + companion -->
+    <div class="col col-a">
+      <section class="panel grow-105" data-widget="schedule">
+        <header><span class="ico">🗓️</span><h2>today</h2><span class="meta" data-slot="meta"></span>
+          <div class="actions"><button data-max title="Maximize">⤢</button></div></header>
+        <div class="body" data-body></div>
+      </section>
+      <section class="panel grow-1" data-widget="pet">
+        <header><span class="ico">🐾</span><h2>companion</h2><span class="meta" data-slot="meta"></span></header>
+        <div class="body" data-body></div>
+      </section>
+    </div>
+
+    <!-- middle: research, music, tasks / notes / launcher -->
+    <div class="col col-mid">
+      <section class="panel grow-1" data-widget="research"
+        data-opts='{"text":{"run":"search ✿","abort":"stop","placeholder":"what are you curious about today?","idle":"ask me anything, I&#39;ll read the web for you","starting":"warming up…","gathering":"reading the web…","writing":"writing your notes…","scanning":"searching","complete":"done ✿","aborted":"stopped.","online":"ready"}}'>
+        <header><span class="ico">🔭</span><h2>research</h2><span class="meta" data-slot="meta"></span>
+          <div class="actions"><select data-slot="history" title="Past research"></select><button data-max title="Maximize">⤢</button></div></header>
+        <div class="body" data-body></div>
+      </section>
+
+      <section class="panel fixed-media" data-widget="media">
+        <header><span class="ico">🎧</span><h2>now playing</h2><span class="meta" data-slot="meta"></span></header>
+        <div class="body" data-body></div>
+      </section>
+
+      <div class="row fixed-row">
+        <section class="panel" data-tabcard id="card-tasks">
+          <header>
+            <nav class="card-tabs"><button data-tab>✓ tasks</button><button data-tab>✦ projects</button></nav>
+            <span class="metas" data-slot="tab-meta"></span>
+            <div class="actions"><button data-max title="Maximize">⤢</button></div>
+          </header>
+          <div class="pane" data-widget="todo" data-opts='{"placeholder":"add a task… (start with ! if important)"}'><div class="body" data-body></div></div>
+          <div class="pane" data-widget="projects" data-opts='{"placeholder":"new project…"}'><div class="body" data-body></div></div>
+        </section>
+
+        <section class="panel" data-widget="notes">
+          <header><span class="ico">📝</span><h2>notes</h2><span class="meta" data-slot="meta"></span>
+            <div class="actions"><button data-max title="Maximize">⤢</button></div></header>
+          <div class="body" data-body></div>
+        </section>
+
+        <section class="panel" data-widget="launcher">
+          <header><span class="ico">🚀</span><h2>launcher</h2><span class="meta" data-slot="meta"></span></header>
+          <div class="body" data-body></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- column D: inspiration + anime -->
+    <div class="col col-d">
+      <section class="panel grow-145" data-widget="images">
+        <header><span class="ico">🖼️</span><h2>inspiration</h2><span class="meta" data-slot="meta"></span>
+          <div class="actions"><button data-slot="config" title="Image sources">⚙</button><button data-slot="refresh" title="Shuffle / refresh">↻</button><button data-max title="Maximize">⤢</button></div></header>
+        <div class="body" data-body></div>
+      </section>
+      <section class="panel grow-1" data-widget="anime">
+        <header><span class="ico">🌸</span><h2>anime</h2>
+          <div class="tabs" data-slot="tabs"><button data-tab="airing" class="on">airing</button><button data-tab="news">news</button></div>
+          <div class="actions"><button data-slot="refresh" title="Refresh">↻</button><button data-max title="Maximize">⤢</button></div></header>
+        <div class="body" data-body></div>
+      </section>
+    </div>
+
+    <!-- column E: body & focus -->
+    <div class="col col-e">
+      <section class="panel fixed-pomo" data-widget="pomodoro">
+        <header><span class="ico">🍅</span><h2>focus</h2><span class="meta" data-slot="meta"></span></header>
+        <div class="body" data-body></div>
+      </section>
+      <section class="panel fixed-water" data-widget="water">
+        <header><span class="ico">💧</span><h2>water</h2><span class="meta" data-slot="meta"></span></header>
+        <div class="body" data-body></div>
+      </section>
+      <section class="panel grow-1" data-widget="meals">
+        <header><span class="ico">🍱</span><h2>meals</h2><span class="meta" data-slot="meta"></span>
+          <div class="actions"><button data-max title="Maximize">⤢</button></div></header>
+        <div class="body" data-body></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- drop-down terminal (Ctrl + `) -->
+  <section class="panel quake" id="quake" data-widget="terminal">
+    <header><span class="ico">⌨️</span><h2>terminal</h2><span class="meta">powershell · ctrl + ` to hide</span></header>
+    <div class="body" data-body></div>
+  </section>
+
+  <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+  <script src="../../node_modules/marked/lib/marked.umd.js"></script>
+  <script src="../../node_modules/dompurify/dist/purify.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "id": "v2-lofi",
+  "name": "LO-FI",
+  "version": "2.0.0",
+  "description": "Cozy anime / lo-fi: glass cards over a living time-of-day city, sakura petals or rain, daily rings.",
+  "widgets": ["hero*", "schedule", "pet", "research", "media", "todo", "projects", "notes", "launcher", "images", "anime", "pomodoro", "water", "meals", "terminal"]
+}

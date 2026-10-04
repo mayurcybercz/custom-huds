@@ -1,6 +1,6 @@
 # Usage guide
 
-This guide covers installing, running and using every widget, plus troubleshooting. For the project layout and how to build your own skin, see the [README](../README.md).
+This guide covers installing, running, and using every skin and widget, plus troubleshooting. For the project layout and how to build your own skin, see the [README](../README.md).
 
 ---
 
@@ -8,7 +8,7 @@ This guide covers installing, running and using every widget, plus troubleshooti
 
 | Need | Why | Notes |
 |------|-----|-------|
-| **Windows 10 / 11** | The media panel, terminal and launcher use Windows APIs | Tested on Windows 11 at 1920×1080 |
+| **Windows 10 / 11** | The media panel, terminal, launcher and notifications use Windows APIs | Tested on Windows 11 at 1920×1080 |
 | **Node.js 18+** | To install and run | `node -v` to check |
 | **Ollama** *(optional)* | Free local research engine | [ollama.com](https://ollama.com), then `ollama pull qwen3:8b` |
 | **Anthropic API key** *(optional)* | Cloud research engine (Claude) | [console.anthropic.com](https://console.anthropic.com) |
@@ -24,101 +24,148 @@ npm install
 npm start
 ```
 
-After the first install, you can double-click **`Start NEXUS.vbs`** to launch without a console window.
+After the first install, you can double-click **`Start Custom HUDs.vbs`** to launch without a console window.
 
-To start a specific skin: `set NEXUS_SKIN=v1-nexus && npm start` (cmd) or `$env:NEXUS_SKIN='v1-nexus'; npm start` (PowerShell).
+To start a specific skin: `set HUD_SKIN=v2-lofi && npm start` (cmd) or `$env:HUD_SKIN='v2-lofi'; npm start` (PowerShell).
 
-## 3. Everyday controls
+## 3. Everyday controls (all skins)
 
 | Action | How |
 |--------|-----|
 | Show / hide the HUD from anywhere | **Ctrl + Alt + Space** |
-| Hide to tray | Close the window, or press **—** at the top right |
-| Quit completely | **⏻** at the top right, or tray icon → *Quit* |
+| Hide to tray | Close the window, or press **—** |
+| Quit completely | **⏻**, or tray icon → *Quit* |
 | Switch skin | Tray icon → *Skin*, or **⚙** → *Skin* |
 | Start with Windows | Tray icon → *Start with Windows*, or **⚙** |
 | Maximize a panel | Double-click its header, or press **⤢** |
 | Restore a panel / close a dialog | **Esc** |
-| Settings | **⚙** at the top right |
+| Settings (skin, research engine, startup) | **⚙** |
 
-## 4. Widgets
+## 4. Skins
 
-### Clock *(v1 only)*
-Arc-reactor clock with the seconds on the ring. The bars show how much of the **day, week, month and year** has passed.
+### NEXUS (v1): hacker HUD
+Cyan-on-black Iron-Man style HUD with a boot sequence, hex-grid background and scanlines. Tech headlines scroll in the top bar, and live CPU / MEM readouts sit at the top right.
 
-### System
-Live CPU (a 2-minute sparkline plus one bar per thread: cyan is normal, amber is busy, red is maxed), RAM, system-drive usage and uptime. It updates every 2 seconds.
+### LO-FI (v2): cozy anime / lo-fi
+Frosted glass cards over an animated city. The sky follows the **real time of day**: dawn, day, dusk, then night with stars and the moon.
 
-### Companion (pet)
-Your Tamagotchi, **BYTE**.
-- It hatches about a minute after first launch.
-- **FEED / PLAY / SLEEP / CLEAN** raise its stats. They decay in real time, even while the HUD is closed, so check in daily.
-- Click the pet to pet it. Double-click its name to rename it.
-- Finishing a task gives it **+10 XP**, and shipping a project gives **+60 XP**. It grows from baby to teen to adult as it levels up.
-- It never dies. If you neglect it, it just gets sad and messy.
+| Control | What it does |
+|---------|--------------|
+| **✿ / ☂ / ☾** (top right) | Weather: sakura petals, rain, or clear sky |
+| **⌨** or **Ctrl + `** | Drop-down terminal (Esc or Ctrl + ` again hides it) |
+| Double-click the greeting | Set the name it greets you with |
+| **Daily rings** (top right) | Today's progress: 🍅 focus sessions (goal 4), 💧 water, ✓ tasks done, plus kcal eaten |
+| **tasks / projects** tabs | One card holds both; it remembers the last tab |
 
-### Research Core
-Type a topic and press **Enter** (or **ENGAGE**).
-1. The engine plans search queries and searches the web. The status line shows each query.
-2. It reads the top pages, then streams a briefing in tiles: TL;DR, key facts, comparisons, sources.
-3. Finished briefings are saved in the **history** dropdown (the last 20).
+## 5. Widgets
 
-Press **ABORT** to stop. Links open in your normal browser.
+### Schedule ("today")
+Your daily timetable.
+- **Add a block:** set the start time (end defaults to +1h), pick how it repeats, type a title, and press **Enter**.
+  - Repeat options: *every day*, *weekdays*, *weekends*, or *today only*.
+- The top shows **NOW** (with time left) and **NEXT** (with a countdown). The current block glows and shows a progress bar.
+- Tick a block's circle to mark it done for today; your pet gets XP. Hover a block and press **✕** to delete it.
+- You get a desktop notification **5 minutes before** each block starts.
 
-**Choosing an engine (⚙ → Research engine):**
-- **Local: Ollama.** Free and private. It needs the Ollama app running and at least one chat model installed. A briefing takes about 1 minute once the model is loaded; the first run after starting Ollama is slower.
-- **Cloud: Claude.** Better and faster briefings, billed to your Anthropic account. Paste your key in ⚙; it's encrypted with Windows DPAPI and never written in plain text.
+### Focus (Pomodoro)
+- **START / PAUSE**, **↺** reset, **⏭** skip to the next phase.
+- Focus is 25 min, short break 5, and every 4th break is long (15).
+- Link a task from the dropdown; the completion notification names it.
+- Finished sessions count toward today's total and the focus ring, and make the pet happy.
+- The timer **keeps running** through reloads, skin switches and restarts. If it finished while the HUD was closed, it's credited when you come back.
 
-### Terminal
-A real PowerShell session that starts in your home folder.
-- **Ctrl+Shift+C / Ctrl+Shift+V** copy and paste. Plain **Ctrl+C** interrupts, as usual.
-- If the shell exits, press any key to restart it.
-- Reloading the HUD keeps the same shell session running.
+### Water
+- Click the glass (or **+250 ml** / **+500**) to log a drink; **−** undoes a glass. Set your daily **goal** in the field.
+- The bars show the last 7 days; full-colour days hit the goal.
+- Between 08:00 and 22:00, if you fall behind pace, you get at most one reminder per hour.
+
+### Meals
+- Pick the meal (it defaults to the right one for the time of day), type what you ate, and press **Enter**.
+  - End with a number to log calories: `paneer wrap 450`.
+- Recent meals appear as **chips**; click one to log it again.
+- Use **‹ ›** to view other days. **Double-click the kcal total** to set your daily goal.
+
+### Inspiration (image wall)
+An auto-scrolling wall of images. Hover to pause, scroll the wheel to move, and click an image to open its page.
+- **⚙** edits the sources, one per line:
+  - `pin: https://www.pinterest.com/<user>/<board>/` for a **public** Pinterest board
+  - `wh: anime rain` for a Wallhaven search (**SFW only**)
+- **↻** reshuffles and refreshes. It also refreshes on its own every 30 min.
+
+### Launcher
+- **Add:** drag apps, shortcuts, folders, files or links onto the card, or press **+** to type a URL or path.
+- **Launch:** click a tile, or press **Alt + 1…9** for the first nine tiles.
+- **Right-click** a tile to rename it. Clear the name to remove the tile.
+
+### Notes
+- An autosaved scratchpad; **Tab** inserts spaces. **⇄** toggles a markdown preview.
+- **+** adds a note. Double-click a tab to rename it, and middle-click it to delete it.
 
 ### Tasks
-- Type and press **Enter** to add a task.
-- Prefix with `!` for **HI** priority or `!!` for **critical**.
-- Click the priority tag to cycle it, and click the box to complete a task (your pet gets XP).
-- Hover a task and press **✕** to delete it.
-- Open tasks sort by priority, with completed ones at the bottom.
+- Type a task and press **Enter**. Prefix with `!` for high priority or `!!` for critical; click the priority tag to cycle it.
+- Tick a task to complete it (the pet gets XP). Hover it and press **✕** to delete it.
 
 ### Projects
-- Type a project name and press **Enter**. Click a project to expand it, where you can:
-  - Drag the **progress** slider. At 100%, it's marked **SHIPPED**.
-  - Set the **status**: active, paused, blocked or shipped.
-  - Keep **notes** and a **link** (opened with ↗).
+- Type a name and press **Enter**. Click a project to set its progress, status (active / paused / blocked / shipped), notes and a link.
+- Hitting **100%** ships it, and the pet celebrates.
 
-### Audio / Video
-Shows whatever Windows thinks is playing: the **Spotify app**, **YouTube / Crunchyroll in a browser**, VLC and so on. You get title, artist, album art and progress, with **⏮ ⏯ ⏭** controls.
-- The SPOTIFY ↗ / CRUNCHYROLL ↗ buttons open those sites in your browser.
-- Spotify and Crunchyroll can't play inside the HUD because they need DRM. Play them normally and control them from here.
+### Research
+1. Type a topic and press **Enter**. The engine plans searches, reads the web, and streams a briefing as tiles.
+2. Briefings are saved in **history** (the last 20). Links open in your browser.
 
-### AI // Tech feed
-Headlines from Hacker News (150+ points), The Verge AI, TechCrunch AI, Ars Technica and MIT Technology Review. It refreshes every 15 minutes (↻ refreshes now). Click a headline to open it. In v1, the headlines also scroll in the top-bar ticker.
+Pick the engine in **⚙**:
+- **Local (Ollama):** free and private. Needs the Ollama app running. A briefing takes about 1 min once the model is loaded.
+- **Cloud (Claude):** faster and better briefings, billed to your Anthropic key. The key is encrypted with Windows DPAPI.
+
+### Now playing / Audio-Video
+Shows whatever Windows is playing (the Spotify app, YouTube or Crunchyroll in a browser…) with album art, progress and **⏮ ⏯ ⏭**.
+- Spotify and Crunchyroll need DRM, so they can't play *inside* the HUD. Play them normally and control them from here.
+
+### Companion (pet)
+- It hatches about a minute after first launch.
+- **FEED / PLAY / SLEEP / CLEAN** raise its stats, which decay in real time (even while the HUD is closed). Click it to pet it, and double-click its name to rename it.
+- It earns XP from completed tasks, shipped projects, focus sessions, schedule blocks, water goals and meals, and grows from baby to teen to adult.
+- Each skin colours it differently, but it's the same pet everywhere.
+- It never dies; if you neglect it, it just gets sad.
+
+### Terminal
+A real PowerShell session.
+- **Ctrl+Shift+C / Ctrl+Shift+V** copy and paste. Plain **Ctrl+C** interrupts.
+- If the shell exits, press any key to restart it.
+
+### System *(NEXUS)*
+CPU sparkline plus per-thread bars, RAM, disk and uptime.
+
+### AI // Tech feed *(NEXUS)*
+Headlines from Hacker News, The Verge AI, TechCrunch AI, Ars Technica and MIT Technology Review. They refresh every 15 min (↻ refreshes now).
 
 ### Anime
-- **AIRING:** popular episodes that aired in the last 12 hours or air in the next 24, from AniList. **CR ▶** opens the show on Crunchyroll.
-- **NEWS:** Anime News Network, Crunchyroll News and MyAnimeList.
+- **airing:** popular episodes from the last 12h and the next 24h (AniList). **CR ▶** opens the show on Crunchyroll.
+- **news:** Anime News Network, Crunchyroll News and MyAnimeList.
 
-## 5. Your data
+## 6. Your data
 
-Everything (tasks, projects, pet, research history, settings) is in one file:
+Everything lives in one file that every skin shares:
 
 ```
-%APPDATA%\nexus-hud\nexus-data.json
+%APPDATA%\custom-huds\data.json
 ```
 
-All skins share it, so switching skins keeps your stuff. **To back up, copy that file.** To reset, quit the HUD and delete the file.
+**To back up, copy that file.** To reset, quit the HUD and delete it.
 
-## 6. Troubleshooting
+Coming from the old NEXUS//HUD build? Your data was copied automatically from `%APPDATA%\nexus-hud`. Once you've checked everything, you can delete that old folder.
+
+## 7. Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| Research says **"Ollama offline"** | Start the Ollama app (tray icon), then reopen ⚙ and save. Check with `ollama list`. |
+| Research says **"Ollama offline"** | Start the Ollama app, then reopen ⚙ and save. Check with `ollama list`. |
 | Research says **"Web search returned nothing"** | You're offline, or the search engines are rate-limiting. Wait a minute and retry. |
-| Research is slow | The model is partly running on the CPU. Close GPU-heavy apps, or pick a smaller model in ⚙. |
+| Research is slow | The model is partly on the CPU. Close GPU-heavy apps, or pick a smaller model in ⚙. |
+| No notifications (water / focus / schedule) | Windows Settings → System → Notifications: make sure they're on and *Do not disturb* is off. |
+| Image wall is empty or a source "failed" | Pinterest boards must be public. Check the board URL, or try a different `wh:` search. |
+| A launcher tile won't open | The file or app moved. Right-click the tile, clear its name to remove it, then drag the new location in. |
 | Media panel says **NO SIGNAL** | Nothing is registered with Windows media controls. Start playback in Spotify or a browser tab. |
-| A feed shows **"unreachable: X"** | That site's RSS was down or blocked. The other sources still load. |
 | The HUD is hidden and won't come back | Press **Ctrl+Alt+Space**, or click the tray icon. |
-| Something looks broken after an update | Tray → *Reload*. If that doesn't fix it, quit and relaunch. |
-| Hotkey doesn't work | Another app may own Ctrl+Alt+Space. Change `TOGGLE_HOTKEY` in `main.js`. |
+| Something looks off after an update | Tray → *Reload*. If that doesn't fix it, quit and relaunch. |
+| Hotkey conflict | Another app owns Ctrl+Alt+Space. Change `TOGGLE_HOTKEY` in `main.js`. |

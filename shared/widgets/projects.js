@@ -7,10 +7,10 @@ const STATUS = {
   done: { label: 'SHIPPED', color: 'var(--ok)' },
 };
 
-export async function mount({ body: root, meta }) {
+export async function mount({ body: root, meta, opts = {} }) {
   let projects = await load('projects', []);
   const openIds = new Set();
-  const input = h('input', { class: 'input', placeholder: '> new project… (enter)' });
+  const input = h('input', { class: 'input', placeholder: opts.placeholder || '> new project… (enter)' });
   const list = h('div', { class: 'list' });
   root.append(input, list);
   const persist = () => save('projects', projects);
@@ -56,7 +56,7 @@ export async function mount({ body: root, meta }) {
         h('div', { class: 'rowx' }, range, status),
         notes,
         h('div', { class: 'rowx' }, link,
-          h('button', { class: 'btn', title: 'Open link', onclick: () => p.link && window.nexus.openExternal(p.link) }, '↗'))));
+          h('button', { class: 'btn', title: 'Open link', onclick: () => p.link && window.hud.openExternal(p.link) }, '↗'))));
     return el;
   }
 

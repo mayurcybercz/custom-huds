@@ -4,6 +4,13 @@ const TILE_COLORS = ['var(--accent)', 'var(--ok)', 'var(--warn)', 'var(--accent2
 const SUGGESTIONS = ['state of open-weight LLMs this month', 'solid-state batteries 2026', 'best anime of this season', 'how does RLHF work', 'Windows 11 widget dev options'];
 const HISTORY_MAX = 20;
 
+// User-facing wording; skins can override any of it with data-opts='{"text": {...}}'.
+const TEXT = {
+  run: 'ENGAGE', abort: 'ABORT', placeholder: 'enter a topic to research…', idle: 'RESEARCH CORE IDLE — awaiting directive',
+  starting: 'engaging research core…', gathering: 'gathering intel…', writing: 'compiling briefing…', scanning: 'SCANNING',
+  complete: 'BRIEFING COMPLETE', aborted: 'aborted.', online: 'core online',
+};
+
 // Split streamed markdown into a title plus "## " sections, each shown as its own tile.
 function parse(md) {
   let title = '';
@@ -22,14 +29,15 @@ function parse(md) {
   return { title, intro: intro.trim(), sections };
 }
 
-export async function mount({ body: root, meta: metaSlot, slot }) {
+export async function mount({ body: root, meta: metaSlot, slot, opts = {} }) {
+  const T = { ...TEXT, ...(opts.text || {}) };
   const meta = metaSlot || document.createElement('span');
   const historySel = slot('history') || document.createElement('select');
   let history = await load('research', []);
   let current = null; // { id, topic, md, sources, status, at }
 
-  const input = h('input', { class: 'input', placeholder: 'enter a topic to research…', spellcheck: 'false' });
-  const runBtn = h('button', { class: 'btn' }, 'ENGAGE');
+  const input = h('input', { class: 'input', placeholder: T.placeholder, spellcheck: 'false' });
+  const runBtn = h('button', { class: 'btn' }, T.run);
   const status = h('div', { class: 'r-status' });
   const out = h('div', { class: 'r-out' });
   root.append(h('div', { class: 'r-input' }, h('span', { class: 'prompt' }, '>'), input, runBtn), status, out);
@@ -37,7 +45,7 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
   function splash() {
     out.replaceChildren(h('div', { class: 'r-splash' },
       h('div', { class: 'ring' }),
-      h('div', {}, 'RESEARCH CORE IDLE — awaiting directive', h('span', { class: 'blink' }, '_')),
+      h('div', {}, T.idle, h('span', { class: 'blink' }, '_')),
       h('div', { class: 'chips' }, ...SUGGESTIONS.map((s) => h('button', { onclick: () => { input.value = s; start(); } }, s)))));
   }
 
@@ -60,7 +68,7 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
   function buildView() {
     const titleEl = h('div', { class: 'r-title' });
     const grid = h('div', { class: 'r-tiles' });
-    const waiting = h('div', { class: 'empty' }, h('span', { class: 'spinner' }), '  gathering intel…');
+    const waiting = h('div', { class: 'empty' }, h('span', { class: 'spinner' }), `  ${T.gathering}`);
     out.replaceChildren(titleEl, grid, waiting);
     out.scrollTop = 0;
     view = { id: current.id, titleEl, grid, waiting, tiles: [] };
@@ -122,27 +130,27 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
   async function start() {
     const topic = input.value.trim();
     if (!topic) return;
-    if (current && current.status === 'running') window.nexus.research.cancel(current.id);
+    if (current && current.status === 'running') window.hud.research.cancel(current.id);
     current = { id: uid(), topic, md: '', sources: [], searches: 0, status: 'running', at: Date.now() };
-    runBtn.textContent = 'ABORT';
-    setStatus('<span class="spinner"></span> engaging research core…');
+    runBtn.textContent = T.abort;
+    setStatus(`<span class="spinner"></span> ${T.starting}`);
     meta.textContent = '';
     render();
-    window.nexus.research.run(current.id, topic);
+    window.hud.research.run(current.id, topic);
   }
 
-  window.nexus.research.onEvent((evt) => {
+  window.hud.research.onEvent((evt) => {
     if (!current || evt.id !== current.id) return;
     const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     switch (evt.type) {
       case 'text':
         current.md += evt.delta;
-        setStatus('<span class="spinner"></span> compiling briefing…');
+        setStatus(`<span class="spinner"></span> ${T.writing}`);
         scheduleRender();
         break;
       case 'search':
         current.searches++;
-        setStatus(`<span class="spinner"></span> SCANNING [${current.searches}] <span class="q">${esc(evt.query)}</span>`);
+        setStatus(`<span class="spinner"></span> ${T.scanning} [${current.searches}] <span class="q">${esc(evt.query)}</span>`);
         break;
       case 'sources':
         current.sources.push(...evt.sources);
@@ -152,10 +160,10 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
       case 'cancelled':
       case 'error': {
         current.status = evt.type;
-        runBtn.textContent = 'ENGAGE';
+        runBtn.textContent = T.run;
         if (evt.type === 'error') setStatus(`<span class="err-text">ERROR:</span> ${esc(evt.message)}`);
-        else if (evt.type === 'cancelled') setStatus('aborted.');
-        else setStatus(`<span class="ok-text">BRIEFING COMPLETE</span> · ${current.searches} searches · ${current.sources.length} sources`);
+        else if (evt.type === 'cancelled') setStatus(T.aborted);
+        else setStatus(`<span class="ok-text">${T.complete}</span> · ${current.searches} searches · ${current.sources.length} sources`);
         if (evt.type === 'done' && current.md) {
           history = [{ id: current.id, topic: current.topic, md: current.md, at: current.at, searches: current.searches, sourceCount: current.sources.length },
             ...history.filter((r) => r.id !== current.id)].slice(0, HISTORY_MAX);
@@ -169,7 +177,7 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
   });
 
   runBtn.addEventListener('click', () => {
-    if (current && current.status === 'running') window.nexus.research.cancel(current.id);
+    if (current && current.status === 'running') window.hud.research.cancel(current.id);
     else start();
   });
   input.addEventListener('keydown', (e) => e.key === 'Enter' && start());
@@ -177,10 +185,10 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
     const r = history.find((x) => x.id === historySel.value);
     historySel.value = '';
     if (!r) return;
-    if (current && current.status === 'running') window.nexus.research.cancel(current.id);
+    if (current && current.status === 'running') window.hud.research.cancel(current.id);
     current = { ...r, sources: [], status: 'done' };
     input.value = r.topic;
-    runBtn.textContent = 'ENGAGE';
+    runBtn.textContent = T.run;
     setStatus(`archived briefing · ${new Date(r.at).toLocaleString()}`);
     meta.textContent = r.sourceCount ? `${r.sourceCount} sources` : '';
     render();
@@ -189,8 +197,8 @@ export async function mount({ body: root, meta: metaSlot, slot }) {
   renderHistory();
   async function showEngine() {
     if (current && current.status === 'running') return;
-    const s = await window.nexus.settings.get();
-    setStatus(s.ready ? `core online · <span class="ok-text">${s.engineLabel}</span>`
+    const s = await window.hud.settings.get();
+    setStatus(s.ready ? `${T.online} · <span class="ok-text">${s.engineLabel}</span>`
     : s.provider === 'ollama' ? '<span class="err-text">Ollama offline</span> — start Ollama, or click ⚙ to configure'
     : '<span class="err-text">no API key</span> — click ⚙ to add one or switch to Ollama');
   }
