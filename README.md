@@ -45,6 +45,7 @@ The v3 design notes, with live samples, are in [docs/design/v3-satoyama.html](do
 git clone https://github.com/mayurcybercz/custom-huds.git
 cd custom-huds
 npm install
+npm run fetch-audio   # optional: CC0 recordings (children, temple bell) for the SATOYAMA skin
 npm start
 ```
 

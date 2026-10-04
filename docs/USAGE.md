@@ -107,7 +107,7 @@ The temple bell rings at 6:00, 12:00 and 18:00 scene time. The camera drifts by 
 - the bamboo pump, the temple bell, wind chimes, taiko and flute
 - the dog and cat
 
-Sounds are placed left or right by where they are in the scene, and get quieter when the camera is far away. If `skins/v3-satoyama/audio/children.mp3` and `bell.mp3` exist (CC0 recordings), they're used for the children's voices (very quiet, daytime only) and the bell.
+Sounds are placed left or right by where they are in the scene, and get quieter when the camera is far away. Run `npm run fetch-audio` once to add two CC0 recordings: children playing (very quiet, daytime only) and a real temple bell from Hida no Sato. Without them, the bell is synthesised and there are no children's voices.
 
 **CPU:** the village is drawn at 640×348 and scaled up. It runs at 30 fps while you use the mouse, 20 fps otherwise, and 15 fps after a minute idle, which is roughly 3–4% of a modern CPU.
 
