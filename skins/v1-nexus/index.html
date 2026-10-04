@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'">
+  <title>NEXUS//HUD</title>
+  <link rel="stylesheet" href="../../node_modules/@xterm/xterm/css/xterm.css">
+  <link rel="stylesheet" href="../../shared/styles/widgets.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <div id="boot"><pre id="boot-log"></pre></div>
+
+  <header id="topbar">
+    <div class="brand"><span class="glyph">◈</span> NEXUS<span class="dim">//</span>HUD <span class="ver">v1</span></div>
+    <div class="ticker"><div class="ticker-track" id="ticker">ESTABLISHING UPLINK…</div></div>
+    <div class="status" id="topstatus"></div>
+    <div class="winbtns">
+      <button data-action="settings" title="Settings / skins">⚙</button>
+      <button data-action="minimize" title="Minimize (Ctrl+Alt+Space toggles)">—</button>
+      <button data-action="quit" class="danger" title="Quit">⏻</button>
+    </div>
+  </header>
+
+  <main id="grid">
+    <section class="panel" data-widget="clock" style="grid-area:clock">
+      <header><span class="idx">01</span><h2>CHRONO</h2></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="sys" style="grid-area:sys">
+      <header><span class="idx">02</span><h2>SYSTEM</h2><span class="meta" data-slot="meta"></span></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="pet" style="grid-area:pet">
+      <header><span class="idx">03</span><h2>COMPANION</h2><span class="meta" data-slot="meta"></span></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="research" style="grid-area:research">
+      <header><span class="idx">04</span><h2>RESEARCH CORE</h2><span class="meta" data-slot="meta"></span>
+        <div class="actions"><select data-slot="history" title="Past research"></select><button data-max title="Maximize">⤢</button></div></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="terminal" style="grid-area:term">
+      <header><span class="idx">05</span><h2>TERMINAL</h2><span class="meta">powershell</span>
+        <div class="actions"><button data-max title="Maximize">⤢</button></div></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="todo" style="grid-area:todo">
+      <header><span class="idx">06</span><h2>TASKS</h2><span class="meta" data-slot="meta"></span>
+        <div class="actions"><button data-max title="Maximize">⤢</button></div></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="projects" style="grid-area:proj">
+      <header><span class="idx">07</span><h2>PROJECTS</h2><span class="meta" data-slot="meta"></span>
+        <div class="actions"><button data-max title="Maximize">⤢</button></div></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="media" style="grid-area:media">
+      <header><span class="idx">08</span><h2>AUDIO / VIDEO</h2><span class="meta" data-slot="meta"></span></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="tech" style="grid-area:tech">
+      <header><span class="idx">09</span><h2>AI // TECH FEED</h2><span class="meta" data-slot="meta"></span>
+        <div class="actions"><button data-slot="refresh" title="Refresh">↻</button><button data-max title="Maximize">⤢</button></div></header>
+      <div class="body" data-body></div>
+    </section>
+
+    <section class="panel" data-widget="anime" style="grid-area:anime">
+      <header><span class="idx">10</span><h2>ANIME</h2>
+        <div class="tabs" data-slot="tabs"><button data-tab="airing" class="on">AIRING</button><button data-tab="news">NEWS</button></div>
+        <div class="actions"><button data-slot="refresh" title="Refresh">↻</button><button data-max title="Maximize">⤢</button></div></header>
+      <div class="body" data-body></div>
+    </section>
+  </main>
+
+  <script src="../../node_modules/@xterm/xterm/lib/xterm.js"></script>
+  <script src="../../node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+  <script src="../../node_modules/marked/lib/marked.umd.js"></script>
+  <script src="../../node_modules/dompurify/dist/purify.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

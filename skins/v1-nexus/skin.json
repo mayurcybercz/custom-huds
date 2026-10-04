@@ -1,0 +1,7 @@
+{
+  "id": "v1-nexus",
+  "name": "NEXUS",
+  "version": "1.0.0",
+  "description": "Hacker / Iron-Man HUD: cyan-on-black, hex grid, scanlines, arc-reactor clock, boot sequence.",
+  "widgets": ["clock*", "sys", "pet", "research", "terminal", "todo", "projects", "media", "tech", "anime"]
+}
