@@ -47,6 +47,7 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
       backgroundThrottling: !process.env.HUD_SNAPSHOT,
+      autoplayPolicy: 'no-user-gesture-required', // ambient sound starts without a click
     },
   });
   win.loadFile(skins.entry(skins.current()));

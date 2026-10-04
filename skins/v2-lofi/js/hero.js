@@ -8,7 +8,9 @@ const VIBES = [
   'small steps still count', 'breathe in… and out', 'lo-fi beats to focus to 🎧', 'be kind to yourself today',
   'progress, not perfection', 'stretch for a minute 🧘',
 ];
+const RAIN_VIBES = ['listen to the rain ☔', 'cozy weather for deep work', 'tea and rain sounds 🍵', 'perfect weather to stay in'];
 const FOCUS_GOAL = 4;
+const raining = () => document.body.dataset.weather === 'rain';
 
 function greeting(hr) {
   if (hr < 5) return ['good night', '🌙'];
@@ -60,13 +62,14 @@ export async function mount({ body: root }) {
     const d = new Date();
     time.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
     const [g, icon] = greeting(d.getHours());
-    greet.textContent = `${g}${profile.name ? `, ${profile.name}` : ''} ${icon}`;
+    greet.textContent = `${g}${profile.name ? `, ${profile.name}` : ''} ${raining() ? '🌧️' : icon}`;
     date.textContent = `${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })} · ${d.toLocaleDateString('ja-JP', { weekday: 'long' })}`;
   }
   function rotateVibe() {
     vibe.classList.remove('show');
     setTimeout(() => {
-      vibe.textContent = VIBES[vibeIdx++ % VIBES.length];
+      const list = raining() ? RAIN_VIBES : VIBES;
+      vibe.textContent = list[vibeIdx++ % list.length];
       vibe.classList.add('show');
     }, 400);
   }

@@ -4,31 +4,58 @@ import { bootHud } from '../../../shared/core/hud.js';
 import { widgets } from '../../../shared/widgets/index.js';
 import { load, save } from '../../../shared/core/util.js';
 import { startScene } from './scene.js';
+import * as ambience from '../../../shared/core/ambience.js';
 import { mount as hero } from './hero.js';
 
 const SCENE_MODES = [['petals', '✿', 'sakura petals'], ['rain', '☂', 'rain'], ['clear', '☾', 'clear sky']];
+const VOLUMES = [[0.6, '🔊', 'on'], [0.25, '🔉', 'quiet'], [0, '🔇', 'off']];
 
 document.querySelectorAll('.panel').forEach((p, i) => p.style.setProperty('--i', i));
 
-// Backdrop + weather toggle.
-let modeIdx = Math.max(0, SCENE_MODES.findIndex(([m]) => m === 'petals'));
-const scene = startScene(document.getElementById('scene'), SCENE_MODES[modeIdx][0]);
+// Backdrop + weather. Weather changes the scene lighting, the card glass tint and the ambience.
+let modeIdx = 0;
+const scene = startScene(document.getElementById('scene'), SCENE_MODES[modeIdx][0], {
+  glass: document.getElementById('glass'),
+  onStrike: (distance) => setTimeout(() => ambience.thunder(distance), 500 + distance * 2800), // sound travels slower than light
+  onRainLevel: (level) => ambience.setRainLevel(level),
+});
+window.hudScene = scene; // handy from DevTools: hudScene.lightning()
 const sceneBtn = document.getElementById('btn-scene');
-const showMode = () => {
-  const [, icon, label] = SCENE_MODES[modeIdx];
+function applyMode() {
+  const [mode, icon, label] = SCENE_MODES[modeIdx];
+  scene.setMode(mode);
+  document.body.dataset.weather = mode;
   sceneBtn.textContent = icon;
   sceneBtn.title = `Weather: ${label} (click to change)`;
-};
-load('v2scene', 'petals').then((saved) => {
-  modeIdx = Math.max(0, SCENE_MODES.findIndex(([m]) => m === saved));
-  scene.setMode(SCENE_MODES[modeIdx][0]);
-  showMode();
-});
+  if (mode === 'rain') ambience.startRain(scene.rainLevel);
+  else ambience.stopRain();
+}
 sceneBtn.addEventListener('click', () => {
   modeIdx = (modeIdx + 1) % SCENE_MODES.length;
-  scene.setMode(SCENE_MODES[modeIdx][0]);
   save('v2scene', SCENE_MODES[modeIdx][0]);
-  showMode();
+  applyMode();
+});
+
+// Ambient sound volume: on → quiet → off.
+let volIdx = 0;
+const soundBtn = document.getElementById('btn-sound');
+function applyVolume() {
+  const [v, icon, label] = VOLUMES[volIdx];
+  ambience.setVolume(v);
+  soundBtn.textContent = icon;
+  soundBtn.title = `Ambient sound: ${label} (click to change)`;
+}
+soundBtn.addEventListener('click', () => {
+  volIdx = (volIdx + 1) % VOLUMES.length;
+  save('v2sound', volIdx);
+  applyVolume();
+});
+
+Promise.all([load('v2scene', 'petals'), load('v2sound', 0)]).then(([savedMode, savedVol]) => {
+  modeIdx = Math.max(0, SCENE_MODES.findIndex(([m]) => m === savedMode));
+  volIdx = Math.min(VOLUMES.length - 1, Math.max(0, Number(savedVol) || 0));
+  applyVolume();
+  applyMode();
 });
 
 // Drop-down terminal: Ctrl + ` or the ⌨ button.
