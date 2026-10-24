@@ -111,6 +111,15 @@ Sounds are placed left or right by where they are in the scene, and get quieter 
 
 **CPU:** the village is drawn at 640×348 and scaled up. It runs at 30 fps while you use the mouse, 20 fps otherwise, and 15 fps after a minute idle, which is roughly 3–4% of a modern CPU.
 
+### RAMEN (v4): a roadside ramen stall on a rainy night
+Just the scene, with no widgets. A cook works the pot under a string of bulbs while customers arrive with umbrellas, eat and leave. A cat sits on the beer crates, a vending machine glows, a neon sign flickers, cars and an elevated train pass, and the rain swells and eases. Puddles reflect every light.
+
+| Control (dock, appears when you move the mouse) | What it does |
+|---|---|
+| **🔇 / 🔉 / 🔊** or **M** | Rain and thunder volume |
+| **⚡** | Call a lightning strike (with thunder if sound is on) |
+| **◐** or **H** | Hide the dock completely |
+
 ## 5. Widgets
 
 ### Schedule ("today")

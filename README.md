@@ -11,6 +11,7 @@ Skinnable, full-desktop HUDs for Windows 11, built with Electron. Every **skin**
 | [`v1-nexus`](skins/v1-nexus) · **NEXUS** | 1.0.0 | ✅ stable | Hacker / Iron-Man HUD: cyan on black, hex grid, scanlines, arc-reactor clock, boot sequence | clock\*, sys, pet, research, terminal, todo, projects, media, tech, anime |
 | [`v2-lofi`](skins/v2-lofi) · **LO-FI** | 2.1.0 | ✅ stable | Cozy anime / lo-fi: frosted glass cards over a city that follows the real time of day; weather changes the lighting (petals, rain with sound and lightning, clear); daily rings | hero\*, schedule, pomodoro, water, meals, images, launcher, notes, todo + projects (tabbed), research, media, anime, pet, terminal (drop-down) |
 | [`v3-satoyama`](skins/v3-satoyama) · **SATOYAMA** | 3.0.0 | ✅ new | A living Japanese village as the desktop: realistic pixel art with dynamic light, an auto day cycle (dawn → festival night → forest), scene modes, villagers, a pettable dog and cat, toads, fireflies, a full soundscape; one-colour HUD at the edges | vclock\*, schedule, todo, pomodoro, water, media + on-demand sheets: research, notes, meals, projects, launcher, anime, pet, terminal |
+| [`v4-ramen`](skins/v4-ramen) · **RAMEN** | 4.0.0 | ✅ new | A roadside ramen stall on a rainy night: red lanterns, steaming broth, a cook and customers coming and going, a cat on the crates, neon and headlights in the puddles, lightning with thunder. Scene only | none |
 
 \* = skin-specific widget; all others come from the shared library.
 
@@ -89,6 +90,10 @@ All data lives in `%APPDATA%\custom-huds\data.json` and is shared by every skin.
 
 ## Changelog
 
+- **v4.0.0**: New **RAMEN** skin, a scene with no widgets.
+  - A ramen yatai on a rainy night, drawn in code at 480×270 and scaled 2×: a cook working the pot, customers who arrive under umbrellas, eat and leave, a cat on the beer crates, a vending machine, a neon sign, a street lamp and an elevated train.
+  - Wet-street reflections that shimmer, ripples, splashes and roof drips; the rain swells and eases, with passing cars and lightning with thunder.
+  - Rain and thunder sound (M cycles the volume), a ⚡ button to call a storm, and a dock that fades away when idle.
 - **v3.0.0**: New **SATOYAMA** skin.
   - A pixel-art Japanese village drawn at 640×348 and scaled 3×, with:
     - a light map (lanterns, windows and the bonfire light their surroundings) and bloom

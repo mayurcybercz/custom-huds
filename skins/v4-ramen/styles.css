@@ -1,0 +1,48 @@
+/* v4 Ramen: the scene is the whole desktop; the only chrome is a small dock that fades away. */
+:root {
+  color-scheme: dark;
+  --bg: #04050c;
+  --panel: rgba(20, 14, 22, 0.94);
+  --panel-solid: rgba(20, 14, 22, 0.97);
+  --line: rgba(255, 190, 130, 0.22);
+  --line-strong: rgba(255, 190, 130, 0.55);
+  --accent: #ffb27a;
+  --accent2: #ff8a5c;
+  --accent3: #ffd6a6;
+  --ok: #ffd6a6;
+  --warn: #ffb27a;
+  --danger: #ff7a6a;
+  --text: rgba(255, 232, 205, 0.92);
+  --strong: #fff0dc;
+  --dim: rgba(255, 232, 205, 0.58);
+  --faint: rgba(255, 232, 205, 0.25);
+  --ink: #1a1018;
+  --glow: none;
+  --radius: 6px;
+  --mono: Consolas, monospace;
+  --display: 'Shippori Mincho B1', 'Yu Mincho', serif;
+  --body: 'Zen Kaku Gothic New', 'Yu Gothic UI', sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+body { color: var(--text); font: 13px/1.5 var(--body); -webkit-font-smoothing: antialiased; user-select: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; display: block; }
+
+#dock {
+  position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; padding: 5px 8px;
+  background: rgba(14, 10, 18, 0.55); border: 1px solid var(--line); border-radius: 999px;
+  backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.6s; z-index: 10;
+}
+body.awake #dock, #dock:hover { opacity: 1; }
+body.hud-hidden #dock { opacity: 0; pointer-events: none; }
+#dock button {
+  width: 30px; height: 30px; border: 0; border-radius: 50%; background: transparent; cursor: pointer; font-size: 14px;
+}
+#dock button:hover { background: rgba(255, 190, 130, 0.18); }
+#dock .sep { width: 1px; height: 16px; background: var(--line); margin: 0 4px; }
+
+#modal { background: rgba(6, 4, 10, 0.55); backdrop-filter: blur(4px); }
